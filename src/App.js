@@ -10,6 +10,8 @@ import {
   Grid,
   Toolbar,
   Typography,
+  IconButton,
+  Button,
 } from "@material-ui/core";
 import CandleChart from "./components/CandleChart";
 import LineChart from "./components/LineChart";
@@ -24,6 +26,7 @@ import TickerSelect from "./components/TickerSelect";
 import OrderForm from "./components/OrderForm";
 import OpenOrders from "./components/OpenOrders";
 import OpenPositions from "./components/OpenPositions";
+import Wallet from "./components/Wallet";
 
 export default function App() {
 
@@ -33,19 +36,21 @@ export default function App() {
     return {
       root: {
         backgroundColor: theme.palette.action.disabledBackground,
+        flexGrow: 1,
       },
       icon: {
         color: theme.palette.text.secondary
-      }
-    }
+      },
+      title: {
+        flexGrow: 1,
+      },
+        }
   });
 
   const classes = useStyles();
 
   const candleChartSpecs = [
     { data: "mark", decimals: 4 },
-    { data: "spot", decimals: 4 },
-    { data: "trade", decimals: 4 },
   ]
 
   return (
@@ -54,9 +59,10 @@ export default function App() {
       <AppBar className={classes.root} position="static">
         <Toolbar>
           <BarChartIcon className={classes.icon} />
-          <Typography variant="h6" noWrap color="textSecondary">
+          <Typography variant="h6" noWrap color="textSecondary" className={classes.title}>
             Perpetual Futures Strategy
           </Typography>
+          <Wallet />
         </Toolbar>
       </AppBar>
       <Container maxWidth="xl">
@@ -64,12 +70,9 @@ export default function App() {
           <Grid item xs={12}>
             <Box mt={2}></Box>
           </Grid>
-          {/* <WalletTable priceDecimals={2} /> */}
-          {/* <PnLTable priceDecimals={2} /> */}
           <Grid item xs={12}>
           <TickerSelect />
           </Grid>
-          {/* <PositionTable priceDecimals={2} /> */}
           <Grid item>
 
           <OrderForm />
@@ -80,15 +83,7 @@ export default function App() {
               decimals={spec.decimals}
             />
           ))}
-          {/* <LineChart
-            endPoint={`tickers/${state.ticker}`}
-            title={`${state.ticker} funding rate`}
-            decimals={5}
-          /> */}
-          {/* <TradeTable /> */}
           <ActivityTable/>
-          <OpenOrders />
-          <OpenPositions />
         </Grid>
       </Container>
     </Fragment >

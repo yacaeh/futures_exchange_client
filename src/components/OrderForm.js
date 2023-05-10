@@ -30,10 +30,22 @@ import TabPanel from "@material-ui/lab/TabPanel";
 import PropTypes from "prop-types";
 import Typography from "@material-ui/core/Typography";
 import InputAdornment from "@material-ui/core/InputAdornment";
+import MuiAlert from '@material-ui/lab/Alert';
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 export default function OrderForm({ data }) {
   const theme = useTheme();
   const useStyles = makeStyles({
+    root: {
+      width: '100%',
+      '& > * + *': {
+        marginTop: theme.spacing(2),
+      },
+    },
+  
     root: {
       color: theme.palette.text.secondary,
     },
@@ -48,6 +60,7 @@ export default function OrderForm({ data }) {
     selected: {},
   });
   const classes = useStyles();
+  const [openSnackBar, setOpenSnackBar] = React.useState(false);
 
   const [state, dispatch] = useContext(Context);
   const [initTickers, setInitTickers] = useState([]);
@@ -106,14 +119,29 @@ export default function OrderForm({ data }) {
     setNewOrder({ ...newOrder, reduceOnly: event.target.checked });
   };
 
+
+  const handleOpenSnackBar = () => {
+    setOpenSnackBar(true);
+  };
+
+  const handleCloseSnackBar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpenSnackBar(false);
+  };
+
+
   const createOrderEndPoint = `createOrder`;
   // const cancelOrderEndPoint = `cancelOrder/${selectedOrder.id}`;
   // const cancelAllOrderEndPoints = `cancelAllOrder`;
   // const editOrderEndPoint = `editOrder/${selectedOrder.id}`;
 
   async function createOrder(event) {
+    // handleOpenSnackBar();
     event.preventDefault();
-
+    
     const config = {
       method: "POST",
       headers: {
@@ -398,5 +426,6 @@ export default function OrderForm({ data }) {
         </TabPanel> */}
       </TabContext>
     </Container>
+    
   );
 }

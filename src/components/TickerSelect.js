@@ -102,13 +102,26 @@ export default function TickerSelect({data}) {
         <TableBody>
             <TableRow>
               <TableCell component="th" scope="row">
-                {currentTicker.pair ? (<div>
-                <img src={`${iconBaseUrl}${currentTicker.pair?.toString().replace(':USD','').toLowerCase()}.svg`} alt={currentTicker.pair}  width={24} height={24}/>
-                {currentTicker.pair?.toString().replace(':','/')}</div>)
+              
+                {currentTicker.pair ? (
+                <Grid container rowSpacing={0} >
+                  <Grid item xs={1}>
+                    <img src={`${iconBaseUrl}${currentTicker.pair?.toString().replace(':USD','').toLowerCase()}.svg`} alt={currentTicker.pair}  width={24} height={24}/>
+                  </Grid>
+                <Grid item xs={4}>
+                  {currentTicker.pair?.toString().replace(':','/')}
+                </Grid>
+                </Grid>)
                 : 
-                (<div>
+                (
+                  <Grid container rowSpacing={0} >
+                  <Grid item xs={1}>
                 <img src={`${iconBaseUrl}btc.svg`} alt={currentTicker.pair}  width={24} height={24}/>
-                BTC/USD</div>)
+                </Grid>
+                <Grid item xs={4}>
+                BTC/USD
+                </Grid>
+                </Grid>)
               }
               </TableCell>
               <TableCell align="right">

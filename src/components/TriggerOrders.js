@@ -271,28 +271,28 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function OpenPositions() {
+export default function TriggerOrders() {
   const classes = useStyles();
-  const [order, setOrder] = useState("desc");
-  const [orderBy, setOrderBy] = useState("lastUpdateTime");
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('price');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(true);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [openPositions, setOpenOrders] = useState([]);
+  const [triggerOrders, setTriggerOrders] = useState([]);
   const [rows, setRows] = useState([]);
-  const endPoint = `openPositions`;
+  const endPoint = `triggerOrders`;
   const [loadingData, setLoadingData] = useState(true);
   const [refreshData, setRefreshData] = useState(false);
 
   const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
   
-  async function getOpenPositions() {
+  async function getTriggerOrders() {
     const response = await fetch(apiUrl);
     const data = await response.json();
     console.log(data);
-    setOpenOrders(data.openPositions);
-    setRows(data.openPositions); 
+    setTriggerOrders(data.elements);
+    setRows(data.elements); 
     setLoadingData(false);
    
 }
@@ -314,7 +314,7 @@ useEffect(() => {
   //     'lastUpdateTime': '2023-04-07T15:18:04.699Z'
   // }
 
-  getOpenPositions();
+  getTriggerOrders();
 
   // let ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/ws/${endPoint}`)
   // ws.onmessage = (event) => {
@@ -398,7 +398,6 @@ useEffect(() => {
     <div className={classes.root}>
       <Paper className={classes.paper}>
         {/* <EnhancedTableToolbar numSelected={selected.length} /> */}
-        {rows.length > 0 && (
         <TableContainer>
           <Table
             className={classes.table}
@@ -416,6 +415,7 @@ useEffect(() => {
               rowCount={rows.length}
             />
             <TableBody>
+            {emptyRows > 0 && ( <TableRow><TableCell colSpan={6}>no records found</TableCell></TableRow> )}
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
@@ -458,14 +458,9 @@ useEffect(() => {
                     </TableRow>
                   );
                 })}
-              {emptyRows > 0 && (
-                <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                  <TableCell colSpan={6} />
-                </TableRow>
-              )}
             </TableBody>
           </Table>
-        </TableContainer>)}
+        </TableContainer>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"

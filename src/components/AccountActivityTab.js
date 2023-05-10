@@ -1,6 +1,6 @@
 import { useContext, useMemo, useState } from "react";
 import { makeStyles} from "@material-ui/core/styles";
-import { Badge } from '@material-ui/core';
+import { Badge,Box } from '@material-ui/core';
 
 import Typography from '@material-ui/core/Typography';
 
@@ -12,11 +12,32 @@ import TabList from "@material-ui/lab/TabList";
 import TabPanel from "@material-ui/lab/TabPanel";
 import OpenOrders from "./OpenOrders";
 import OpenPositions from "./OpenPositions";
+import TriggerOrders from "./TriggerOrders";
+import FilledOrders from "./FilledOrders";
+
+const useStyles = makeStyles({
+  appContainer: {
+    display: "flex",
+    flexDirection: "column",
+    width: "100vw",
+    height: "100vh"
+  },
+
+  container: {
+    display: "flex",
+    height: "100%",
+    width: "100%"
+  },
+  panel: {
+    width: "100%"
+  }
+});
 
 export default function ActivityTable() {
 
   const [state, dispatch] = useContext(Context);
   const [selectedTab, setTab] = useState("1");
+  const classes = useStyles();
 
   const onTickerClick = (ticker) => {
     dispatch({ type: ACTIONS.SET_TICKER, payload: ticker });
@@ -31,9 +52,9 @@ export default function ActivityTable() {
   };
 
     return (
+      <Box className={classes.appContainer}>
       <TabContext value={selectedTab}>
         <TabList onChange={handleTab} aria-label="Activity Tabs">
-        
           <Tab label={<Badge badgeContent={1} max={99} color="primary" >Open Positions</Badge>} value="1" />
           <Tab label={<Badge badgeContent={1} max={99} color="primary" >Open Orders</Badge>}  value="2" />
           <Tab label="Trigger Orders" value="3" />
@@ -46,8 +67,12 @@ export default function ActivityTable() {
           <OpenOrders />
         </TabPanel>
         <TabPanel value="3">
+          <TriggerOrders />
         </TabPanel>
         <TabPanel value="4">
+          <FilledOrders />  
         </TabPanel>
-      </TabContext>);
+      </TabContext>
+      </Box>
+      );
   }

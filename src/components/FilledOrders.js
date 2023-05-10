@@ -31,53 +31,35 @@ import Button from "@material-ui/core/Button";
 import moment from "moment";
 import AssignmentIcon from "@material-ui/icons/Assignment";
 import Grid from "@material-ui/core/Grid";
-import { TextField } from "@material-ui/core";
-import InputAdornment from "@material-ui/core/InputAdornment";
-import LinearWithValueLabel from "./LinearWithValueLabel";
+import Divider from "@material-ui/core/Divider";
 
-//     'order_id': '2ce038ae-c144-4de7-a0f1-82f7f4fca864',
-//     'symbol': 'pi_ethusd',
-//     'side': 'buy',
-//     'orderType': 'lmt',
-//     'limitPrice': 1200,
-//     'unfilledSize': 100,
-//     'receivedTime': '2023-04-07T15:18:04.699Z',
-//     'status': 'untouched',
-//     'filledSize': 0,
-//     'reduceOnly': False,
-//     'lastUpdateTime': '2023-04-07T15:18:04.699Z'
-
+// "side":"short","symbol":"pf_xbtusd","price":27642.0,"fillTime":"2023-05-08T23:10:42.446Z","size":0.0002,"unrealizedFunding":3.934434050501591e-06,"pnlCurrency":"USD"}
 function createData(
-  order_id,
   symbol,
   side,
-  orderType,
-  limitPrice,
-  unfilledSize,
-  receivedTime,
-  status,
-  filledSize,
-  reduceOnly,
-  lastUpdateTime,
+  price,
+  fillTime,
+  size,
+  unrealizedFunding,
+  pnlCurrency,
   action
 ) {
   return {
-    order_id,
     symbol,
     side,
-    orderType,
-    limitPrice,
-    unfilledSize,
-    receivedTime,
-    status,
-    filledSize,
-    reduceOnly,
-    lastUpdateTime,
+    price,
+    fillTime,
+    size,
+    unrealizedFunding,
+    pnlCurrency,
     action,
   };
 }
 
-const cancelAllOrderEndPoints = `cancelAllOrder`;
+// const rows = [
+//   createData('Cupcake', 305, 3.7, 67, 4.3, false, 1),
+//   createData('Donut', 452, 25.0, 51, 4.9, false,1 ),
+// ];
 const iconBaseUrl = `https://futures.kraken.com/trade/assets/images/crypto-icons/color/`;
 var nf = new Intl.NumberFormat("en", { minimumFractionDigits: 2 });
 
@@ -114,66 +96,16 @@ const headCells = [
     label: "DATE & TIME",
   },
   { id: "symbol", numeric: false, disablePadding: false, label: "MARKET" },
+  { id: "type", numeric: false, disablePadding: false, label: "TYPE" },
   { id: "side", numeric: false, disablePadding: false, label: "SIDE" },
-  { id: "limitPrice", numeric: true, disablePadding: false, label: "PRICE" },
-  { id: "remainig", numeric: true, disablePadding: false, label: "REMAINIG" },
+  { id: "size", numeric: false, disablePadding: false, label: "SIZE" },
   {
-    id: "reduceOnly",
-    numeric: false,
+    id: "fillPrice",
+    numeric: true,
     disablePadding: false,
-    label: "REDUCE ONLY",
-  },
-  {
-    id: "actions",
-    numeric: false,
-    disablePadding: false,
-    label: "Cancel All Orders",
+    label: "FILL PRICE",
   },
 ];
-
-async function cancelAllOrders() {
-  console.log("cancelAllOrders");
-
-  const config = {
-    method: "DELETE",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-  };
-  const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${cancelAllOrderEndPoints}`;
-  const response = await fetch(url, config);
-  console.log(await response.json());
-}
-
-async function cancelOrder(id) {
-  console.log("cancel Orders" + id);
-
-  const config = {
-    method: "DELETE",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-  };
-  const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/cancelOrder/${id}`;
-  const response = await fetch(url, config);
-  console.log(await response.json());
-}
-
-async function editOrder(order) {
-  const config = {
-    method: "PUT",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(order),
-  };
-  const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/editOrder/${order.order_id}`;
-  const response = await fetch(url, config);
-  console.log(await response.json());
-}
 
 function EnhancedTableHead(props) {
   const {
@@ -280,16 +212,7 @@ const EnhancedTableToolbar = (props) => {
       className={clsx(classes.root, {
         [classes.highlight]: numSelected > 0,
       })}
-    >
-      <Typography
-        className={classes.title}
-        variant="h6"
-        id="tableTitle"
-        component="div"
-      >
-        Open Orders
-      </Typography>
-    </Toolbar>
+    ></Toolbar>
   );
 };
 
@@ -321,8 +244,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function OpenOrders() {
-  const [state, dispatch] = useContext(Context);
+export default function FilledOrders() {
   const classes = useStyles();
   const [order, setOrder] = useState("desc");
   const [orderBy, setOrderBy] = useState("lastUpdateTime");
@@ -330,39 +252,21 @@ export default function OpenOrders() {
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(true);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [openOrders, setOpenOrders] = useState([]);
+  const [filledOrders, setFilledOrders] = useState([]);
   const [rows, setRows] = useState([]);
-  const endPoint = `openOrders`;
+  const endPoint = `filledOrders`;
   const [loadingData, setLoadingData] = useState(true);
   const [refreshData, setRefreshData] = useState(false);
-  const [newOrder, setNewOrder] = useState({
-    size: 0.0,
-    limitPrice: 0.0,
-    cliOrdId: "",
-    stopPrice: 0.0,
-  });
-  const [currentOrder, setCurrentOrder] = useState({})
+  const [currentOrder, setCurrentOrder] = useState({});
 
   const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
 
-  const handleQuantityChange = (event) => {
-    setNewOrder({ ...newOrder, size: event.target.value });
-  };
-
-  const handleLimitPriceChange = (event) => {
-    setNewOrder({ ...newOrder, limitPrice: event.target.value });
-  };
-
-  const handleReduceOnlyChange = (event) => {
-    setNewOrder({ ...newOrder, reduceOnly: event.target.checked });
-  };
-
-  async function getOpenOrders() {
+  async function getFilledOrders() {
     const response = await fetch(apiUrl);
     const data = await response.json();
     console.log(data);
-    setOpenOrders(data.openOrders);
-    setRows(data.openOrders);
+    setFilledOrders(data.fills);
+    setRows(data.fills);
     setLoadingData(false);
   }
 
@@ -372,7 +276,7 @@ export default function OpenOrders() {
     //     'symbol': 'pi_ethusd',
     //     'side': 'buy',
     //     'orderType': 'lmt',
-    //     'limitPrice': 1200,
+    //     'price': 1200,
     //     'unfilledSize': 100,
     //     'receivedTime': '2023-04-07T15:18:04.699Z',
     //     'status': 'untouched',
@@ -381,7 +285,7 @@ export default function OpenOrders() {
     //     'lastUpdateTime': '2023-04-07T15:18:04.699Z'
     // }
 
-    getOpenOrders();
+    getFilledOrders();
 
     // let ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/ws/${endPoint}`)
     // ws.onmessage = (event) => {
@@ -392,7 +296,6 @@ export default function OpenOrders() {
 
   // Dialog
   const [open, setOpen] = useState(false);
-  const [openEdit, setOpenEdit] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
 
   const handleClickOpen = () => {
@@ -401,10 +304,6 @@ export default function OpenOrders() {
 
   const handleClose = (value) => {
     setOpen(false);
-  };
-
-  const handleEditClose = (value) => {
-    setOpenEdit(false);
   };
 
   const handleDetailClose = (value) => {
@@ -457,27 +356,16 @@ export default function OpenOrders() {
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
-  const handleCancelOrder = (id) => {
-    console.log("Cancel order");
-    cancelOrder(id);
-    setRefreshData(!refreshData);
-  };
-  const handleEditOrder = (id) => {
-    console.log("Edit order");
-    // editOrder(id)
-    setOpenEdit(true);
-    setRefreshData(!refreshData);
-  };
   const handleOrderDetail = (data) => {
-    
     console.log("Order Detail");
     setOpenDetail(true);
-    setCurrentOrder(data)
+    setCurrentOrder(data);
   };
 
   return (
     <div className={classes.root}>
       <Paper className={classes.paper}>
+        {/* <EnhancedTableToolbar numSelected={selected.length} /> */}
         {rows.length > 0 && (
           <TableContainer>
             <Table
@@ -517,6 +405,7 @@ export default function OpenOrders() {
                           checked={isItemSelected}
                           inputProps={{ 'aria-labelledby': labelId }}
                         /> */}
+                          {/*  symbol, side, price, fillTime, size, unrealizedFunding, pnlCurrency */}
                         </TableCell>
                         <TableCell
                           component="th"
@@ -542,22 +431,31 @@ export default function OpenOrders() {
                           />
                           {row.symbol}
                         </TableCell>
-                        <TableCell align="center"><Typography style={{color:'#3C9B4A'}}>{row.side}</Typography></TableCell>
+
+                        <TableCell align="center">
+                          <Typography>{row.fillType}</Typography>
+                        </TableCell>
+
+                        <TableCell align="center">
+                          <Typography
+                            style={{
+                              color: row.side == "sell" ? "#EE3333" : "#3C9B4A",
+                            }}
+                          >
+                            {row.side}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography>{row.size}</Typography>
+                        </TableCell>
+
                         <TableCell align="center">
                           <Typography>
-                            {parseFloat(row.limitPrice).toFixed(2)}
+                            {nf.format(parseFloat(row.price).toFixed(2))}
                           </Typography>
                           <Typography style={{ color: "#999999" }}>
                             USD
                           </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          {row.unfilledSize} |{" "}
-                          {row.unfilledSize + row.filledSize}
-                          <LinearWithValueLabel value={ parseInt(100*(row.filledSize) / (row.filledSize+row.unfilledSize)) } />              
-                        </TableCell>
-                        <TableCell align="center">
-                          {row.reduceOnly?.toString()}
                         </TableCell>
                         <TableCell align="center">
                           <Button
@@ -566,21 +464,6 @@ export default function OpenOrders() {
                             }}
                           >
                             <AssignmentIcon />
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              handleEditOrder(row);
-                            }}
-                          >
-                            {"Edit"}
-                          </Button>
-                          <Button
-                            style={{ color: "#EE3333" }}
-                            onClick={() => {
-                              handleCancelOrder(row.order_id);
-                            }}
-                          >
-                            {"Cancel"}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -606,76 +489,26 @@ export default function OpenOrders() {
         />
       </Paper>
       <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {"Confirm Order Cancellation"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            <Typography gutterBottom>Are you sure?</Typography>
-            <Typography gutterBottom></Typography>
-            <Typography gutterBottom>
-              This will cancel all of your orders and triggers for all markets.
-            </Typography>
-            Are you sure this is what you want to do?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              cancelAllOrders();
-              setRefreshData(!refreshData);
-            }}
-            style={{ backgroundColor: "#3C9B4A" }}
-          >
-            Yes
-          </Button>
-          <Button onClick={handleClose} style={{ backgroundColor: "#E2434D" }}>
-            No
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
+        fullWidth={300}
+        maxWidth={"sm"}
         open={openDetail}
         onClose={handleDetailClose}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          {"Order Detail"}
+          {"Filled order details"}
         </DialogTitle>
+        <Divider />
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-          <Grid container spacing={5}>
-              <Grid item xs={2}>
-              <img src={`${iconBaseUrl}/${currentOrder.symbol
-                              ?.split("_")[1]
-                              .slice(0, -3)}.svg`}
-                            alt={currentOrder.symbol?.split("_")[1].slice(0, -3)}
-                            width={24}
-                            height={24}
-                          />
-                <img src={`${iconBaseUrl}/usd.svg`}
-                            alt={"usd"}
-                            width={24}
-                            height={24}
-                          />
-                          </Grid>
-                <Grid item xs={1}>
-                  {currentOrder.symbol?.toUpperCase()}
-                </Grid>
-              </Grid>
             <Grid container spacing={2}>
               <Grid item xs={4}>
                 <Typography variant="subtitle2">Type</Typography>
               </Grid>
               <Grid item xs={6} md={8}>
                 <Typography variant="subtitle2">
-                  {currentOrder.orderType}
+                  {currentOrder.fillType}
                 </Typography>
               </Grid>
 
@@ -686,21 +519,26 @@ export default function OpenOrders() {
                 <Typography variant="subtitle2">{currentOrder.side}</Typography>
               </Grid>
               <Grid item xs={4}>
-                <Typography variant="subtitle2">Limit Price</Typography>
+                <Typography variant="subtitle2">Size</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">{currentOrder.size}</Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Fill Price</Typography>
               </Grid>
               <Grid item xs={6} md={8}>
                 <Typography variant="subtitle2">
-                  {nf.format(parseFloat(currentOrder.limitPrice).toFixed(2))} USD
+                  {nf.format(parseFloat(currentOrder.price).toFixed(2))}
                 </Typography>
               </Grid>
               <Grid item xs={4}>
-                <Typography variant="subtitle2">Remainig</Typography>
+                <Typography variant="subtitle2">Symbol</Typography>
               </Grid>
               <Grid item xs={6} md={8}>
                 <Typography variant="subtitle2">
-                  {currentOrder.unfilledSize} | {currentOrder.unfilledSize + currentOrder.filledSize}
+                  {currentOrder.symbol}
                 </Typography>
-                <LinearWithValueLabel value={ parseInt(100*(currentOrder.filledSize) / (currentOrder.filledSize+currentOrder.unfilledSize)) } />              
               </Grid>
               <Grid item xs={4}>
                 <Typography variant="subtitle2">Date & Time</Typography>
@@ -710,6 +548,14 @@ export default function OpenOrders() {
                   {moment(currentOrder.lastUpdateTime).format(
                     "HH:mm:ss DD/MM/YYYY"
                   )}
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Fill Id</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                  {currentOrder.fill_id}
                 </Typography>
               </Grid>
               <Grid item xs={4}>
@@ -724,72 +570,13 @@ export default function OpenOrders() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDetailClose} style={{ backgroundColor: "#E2434D" }}>
+          <Button
+            onClick={handleDetailClose}
+            style={{ backgroundColor: "#E2434D" }}
+          >
             Close
           </Button>
         </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={openEdit}
-        onClose={handleEditClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {"Edit Order"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            <form className={classes.form} onSubmit={editOrder}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={62}>
-                  <TextField
-                    name="Limit Price"
-                    variant="outlined"
-                    required
-                    fullWidth
-                    id="limitPrice"
-                    label="Limit Price"
-                    onChange={handleLimitPriceChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="end">USD</InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={62}>
-                  <TextField
-                    variant="outlined"
-                    required
-                    fullWidth
-                    id="quantity"
-                    label="Quantity"
-                    name="quantity"
-                    onChange={handleQuantityChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="end">
-                          {state.ticker.slice(0, -3)}
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-              </Grid>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                color="primary"
-                className={classes.submit}
-              >
-                Edit Order
-              </Button>
-            </form>
-          </DialogContentText>
-        </DialogContent>
       </Dialog>
     </div>
   );
