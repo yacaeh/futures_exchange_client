@@ -360,10 +360,12 @@ export default function OpenOrders() {
   async function getOpenOrders() {
     const response = await fetch(apiUrl);
     const data = await response.json();
-    console.log(data);
+    console.log(data.openOrders?.length);
     setOpenOrders(data.openOrders);
     setRows(data.openOrders);
     setLoadingData(false);
+    dispatch({ type: ACTIONS.SET_OPEN_ORDER_AMOUNT, payload: data.openOrders?.length })
+
   }
 
   useEffect(() => {

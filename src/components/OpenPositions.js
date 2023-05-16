@@ -74,7 +74,7 @@ const headCells = [
   { id: 'symbol', numeric: false, disablePadding: false, label: 'MARKET' },
   { id: 'size', numeric: false, disablePadding: false, label: 'SIZE' },
   { id: 'price', numeric: true, disablePadding: false, label: 'PRICE' },
-  // { id: 'size', numeric: true, disablePadding: false, label: 'SIZE' },
+  { id: 'Leverage', numeric: true, disablePadding: false, label: 'Effective LVG' },
   // { id: 'reduceOnly', numeric: false, disablePadding: false, label: 'REDUCE ONLY' },
   // { id: 'actions', numeric: false, disablePadding: false, label: 'Cancel All Orders' },
 ];
@@ -273,6 +273,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function OpenPositions() {
   const classes = useStyles();
+  const [state, dispatch] = useContext(Context);
   const [order, setOrder] = useState("desc");
   const [orderBy, setOrderBy] = useState("lastUpdateTime");
   const [selected, setSelected] = useState([]);
@@ -288,13 +289,17 @@ export default function OpenPositions() {
   const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
   
   async function getOpenPositions() {
+    // Profit/Loss (RoE) = Price Difference X (Contract Notional Value / Exit Price) 
+    // ROE = (PL/Initial Margin) X 100
+    // PL = (Exit Price - Entry Price) X Contract Notional Value
+
     const response = await fetch(apiUrl);
     const data = await response.json();
     console.log(data);
     setOpenOrders(data.openPositions);
     setRows(data.openPositions); 
     setLoadingData(false);
-   
+    dispatch({ type: ACTIONS.SET_OPEN_POSITION_AMOUNT, payload: data.openPositions?.length })
 }
 
 useEffect(() => {
@@ -380,13 +385,13 @@ useEffect(() => {
 
   const emptyRows = rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
-  const handleCancelOrder = (id) => {
-    console.log('Cancel order')
+  const handleMarketOrder = (id) => {
+    console.log('Market order')
     cancelOrder(id)
     setRefreshData(!refreshData);
 }
-  const handleEditOrder = (id) => {
-    console.log('Edit order')
+  const handleLimitOrder = (id) => {
+    console.log('Limit order')
     // editOrder(id)
     setRefreshData(!refreshData);
   }
@@ -446,15 +451,20 @@ useEffect(() => {
                       <TableCell align="center">
                       <img src={`${iconBaseUrl}/${row.symbol?.split('_')[1].slice(0,-3)}.svg`} alt={row.symbol?.split('_')[1].slice(0,-3)} width={24} height={24} />
                         {row.symbol}</TableCell>
-                      <TableCell align="center"><Typography style={{color:'#EE3333'}}>{row.side}</Typography> {row.size}</TableCell>
+                      <TableCell align="center"><Typography style={{
+                              color: row.side == "short" ? "#EE3333" : "#3C9B4A",
+                            }}>{row.side}</Typography> {row.size}</TableCell>
                       <TableCell align="center">
                       <Typography>{parseFloat(row.price).toFixed(5)}</Typography>
+                        <Typography style={{color:'#999999'}}>USD</Typography></TableCell>
+                      <TableCell align="center">
+                      <Typography>{parseFloat(row.maxFixedLeverage).toFixed(2)}X</Typography>
                         <Typography style={{color:'#999999'}}>USD</Typography></TableCell>
                       <TableCell align="center">
                       <Button onClick={() => {handleOrderDetail(row)}}>
                         <AssignmentIcon />
                       </Button>
-                        <Button onClick={()=> {handleEditOrder(row)}}>{'Edit'}</Button><Button style={{color:'#EE3333'}} onClick={()=> {handleCancelOrder(row.order_id)}}>{'Cancel'}</Button></TableCell>
+                        <Button onClick={()=> {handleLimitOrder(row)}}>{'Limit'}</Button><Button style={{color:'#EE3333'}} onClick={()=> {handleMarketOrder(row.order_id)}}>{'Market'}</Button></TableCell>
                     </TableRow>
                   );
                 })}

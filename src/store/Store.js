@@ -1,11 +1,13 @@
 import React, { createContext, useReducer, useEffect } from "react";
 import Reducer from './Reducer'
 import { useTheme } from '@material-ui/core/styles';
+const crypto = require('crypto');
 
 export const initialState = {
     openClose: false,
     openOpen: false,
-    ticker: "PF_XBTUSD",
+    ticker: "PI_XBTUSD",
+    prevTicker : "PI_XBTUSD",
     tickerRows: [],
     positionRows: [],
     prices: {},
@@ -19,14 +21,24 @@ export const initialState = {
         notional: { amount: 0, usdt: 0 },
         margin: { amount: 0, usdt: 0 }
     },
+    openPositionAmount: 0,
+    openOrderAmount: 0,
+    fillsAmount : 0,
     candleInterval: "1m",
-    timeRange: {}
+    timeRange: {},
+    walletStream: {},
+    tickerStream: {},
+    tradeStream: {},
+    openOrdersStream: {},
+    fillsStream: {},
+    dataUpdated: false,
 };
 
 export const ACTIONS = {
     SET_CLOSE_OPEN: 'SET_CLOSE_OPEN',
     SET_OPEN_OPEN: 'SET_OPEN_OPEN',
     SET_TICKER: 'SET_TICKER',
+    SET_PREV_TICKER: 'SET_PREV_TICKER',
     SET_TICKER_ROWS: 'SET_TICKER_ROWS',
     SET_POSITION_ROWS: 'SET_POSITION_ROWS',
     SET_TRADE_ROWS: 'SET_TRADE_ROWS',
@@ -37,7 +49,28 @@ export const ACTIONS = {
     SET_PNL_ROWS: 'SET_PNL_ROWS',
     SET_CANDLE_INTERVAL: 'SET_CANDLE_INTERVAL',
     SET_TIME_RANGE: 'SET_TIME_RANGE',
+    SET_OPEN_POSITION_AMOUNT: 'SET_OPEN_POSITION_AMOUNT',
+    SET_OPEN_ORDER_AMOUNT: 'SET_OPEN_ORDER_AMOUNT',
+    SET_WALLET_STREAM : 'SET_WALLET_STREAM',
+    SET_TICKER_STREAM : 'SET_TICKER_STREAM',
+    SET_TRADE_STREAM : 'SET_TRADE_STREAM',
+    SET_OPEN_ORDERS_STREAM : 'SET_OPEN_ORDERS_STREAM',
+    SET_OPEN_POSITIONS_STREAM : 'SET_OPEN_POSITIONS_STREAM',
+    SET_FILLS_STREAM : 'SET_FILLS_STREAM',
+    SET_FILLS_AMOUNT : 'SET_FILLS_AMOUNT',
+    SET_DATA_UPDATED : 'SET_DATA_UPDATED',
 }
+const wsurl = `wss://futures.kraken.com/ws/v1`
+const getWebSocketSignature = (challange, secret) => {
+    const secret_buffer = new Buffer(secret, 'base64');
+    const hash          = new crypto.createHash('sha256');
+    const hmac          = new crypto.createHmac('sha512', secret_buffer);
+    const hash_digest   = hash.update(challange).digest('binary');
+    const hmac_digest   = hmac.update(hash_digest, 'binary').digest('base64');
+
+    return hmac_digest;
+};
+
 
 const Store = ({ children }) => {
     const [state, dispatch] = useReducer(Reducer, initialState);
@@ -57,6 +90,7 @@ const Store = ({ children }) => {
 
         return tick;
     };
+
 
 
     // Initial data for position table
@@ -153,10 +187,200 @@ const Store = ({ children }) => {
         return () => ws.close()
     };
 
+    async function streamPrivateFeed(feed) {
+
+        let ws = new WebSocket(wsurl);
+        let challange = ""
+        let signedChallenge = ""
+        ws.onopen = () => {
+            ws.send(
+                JSON.stringify({
+                    "event": "challenge",
+                    "api_key": process.env.REACT_APP_PRIVATE_API_KEY,
+                })
+            );
+
+        };
+        ws.onclose = (error) => {
+            console.log("disconnect from " + wsurl);
+            console.log(error);
+        };
+        ws.onerror = (error) => {
+            console.log("connection error " + wsurl);
+            console.log(error);
+        };
+        ws.onmessage = (evt) => {
+            const data = JSON.parse(evt.data);
+            console.log(data);
+
+            
+            if (data.event === "challenge") {
+                challange = data.message;
+                signedChallenge = getWebSocketSignature(data.message, process.env.REACT_APP_PRIVATE_API_KEY);
+                ws.send(
+                    JSON.stringify({
+                        "event": "subscribe",
+                        "feed": feed, //"open_positions", "balances", "open_orders_verbose"
+                        "api_key": process.env.REACT_APP_PUBLIC_API_KEY,
+                        "original_challenge": challange,
+                        "signed_challenge": signedChallenge,
+                    })
+                );
+            }
+
+            if (data.feed === "balances") {
+                console.log("balances:",data.flex_futures?.balance_value);
+                dispatch({ type: ACTIONS.SET_WALLET_STREAM, payload: data })
+            }
+
+            if (data.feed === "open_positions") {
+                console.log("open_positions:",data);
+                dispatch({ type: ACTIONS.SET_OPEN_POSITIONS_STREAM, payload: data })
+                dispatch({ type: ACTIONS.SET_OPEN_POSITION_AMOUNT, payload: data.positions?.length })
+
+            }
+
+            if (data.feed === "open_orders_verbose") {
+                console.log("open_orders_verbose:",data);
+                dispatch({ type: ACTIONS.SET_OPEN_ORDERS_STREAM, payload: data })
+                dispatch({ type: ACTIONS.SET_OPEN_POSITION_AMOUNT, payload: data.orders?.length })
+            }
+            if (data.feed === "fills_snapshot") {
+                console.log("fills_snapshot:",data);
+                dispatch({ type: ACTIONS.SET_FILLS_STREAM, payload: data })
+                dispatch({ type: ACTIONS.SET_FILLS_AMOUNT, payload: data.fills?.length })
+            }
+
+
+        }
+        return () => ws.close()
+    }
+
+
+
+    async function streamPublicFeed(feed) {
+
+        let ws = new WebSocket(wsurl);
+
+        ws.onopen = () => {
+            // console.log("Is opening everytime?");
+            // if (state.prevTicker !== state.ticker){
+            //     console.log(`Unsubscribing ${state.prevTicker} and subscribe ${state.ticker}`)
+            //     ws.send(
+            //         JSON.stringify({
+            //             "event": "unsubscribe",
+            //             "feed": feed, // "ticker", "trade"
+            //             "product_ids": [
+            //                 state.prevTicker
+            //             ]
+            //           })
+            //     )    
+            //     dispatch({ type: ACTIONS.SET_PREV_TICKER, payload: state.ticker })
+            // }
+
+
+            ws.send(
+                JSON.stringify({
+                    "event": "subscribe",
+                    "feed": feed, // "ticker", "trade"
+                    "product_ids": [
+                        state.ticker
+                    ]
+                  })
+            )
+            dispatch({ type: ACTIONS.SET_DATA_UPDATED, payload: false })
+        };
+        ws.onclose = (error) => {
+            console.log("disconnect from " + wsurl);
+            console.log(error);
+        };
+        ws.onerror = (error) => {
+            console.log("connection error " + wsurl);
+            console.log(error);
+        };
+        ws.onmessage = (evt) => {
+            const data = JSON.parse(evt.data);
+            // if (state.prevTicker !== state.ticker){
+            //     console.log(`Unsubscribe This ${state.prevTicker} and subscribe ${state.ticker}`)
+            //     ws.send(
+            //         JSON.stringify({
+            //             "event": "unsubscribe",
+            //             "feed": feed, // "ticker", "trade"
+            //             "product_ids": [
+            //                 state.prevTicker
+            //             ]
+            //           })
+            //     )    
+            //     dispatch({ type: ACTIONS.SET_PREV_TICKER, payload: state.ticker })
+            // }
+
+            if (data.feed === "ticker") {
+                console.log(`Subscribed to ticker ${state.ticker}, ${data.product_id}`, data);
+                dispatch({ type: ACTIONS.SET_TICKER_STREAM, payload: data })
+                dispatch({ type: ACTIONS.SET_DATA_UPDATED, payload: true })
+            }
+
+            if (data.feed === "trade_snapshot") {
+                console.log("Subscribed to trade", data);
+                dispatch({ type: ACTIONS.SET_TRADE_STREAM, payload: data })
+            }
+
+        }
+        return () => ws.close()
+    }
+
+    async function unSubscribePublicFeed(feed) {
+
+        let ws = new WebSocket(wsurl);
+
+        ws.onopen = () => {
+            console.log(`Can this ${feed} ${state.prevTicker}be unsubscribed?`)
+            ws.send(
+                JSON.stringify({
+                    "event": "unsubscribe",
+                    "feed": feed, // "ticker", "trade"
+                    "product_ids": [
+                        state.prevTicker
+                    ]
+                  })
+            )
+
+        };
+        ws.onclose = (error) => {
+            console.log("disconnect from " + wsurl);
+            console.log(error);
+        };
+        ws.onerror = (error) => {
+            console.log("connection error " + wsurl);
+            console.log(error);
+        };
+        ws.onmessage = (evt) => {
+            const data = JSON.parse(evt.data);
+            console.log("unsubscribe data",data);
+        }
+            return () => ws.close()
+        }
+    
+    
     useEffect(() => {
-        // streamPrices();
-        // streamAccountUpdates()
+        streamPrivateFeed("balances");
+        streamPrivateFeed("open_positions");
+        streamPrivateFeed("open_orders_verbose");
+        streamPrivateFeed("fills");
     }, []);
+
+    useEffect(() => {
+        streamPublicFeed('ticker');
+        streamPublicFeed('trade');
+
+        if (state.ticker !== state.prevTicker){
+            console.log("Ticker changed")
+            unSubscribePublicFeed('ticker');
+            unSubscribePublicFeed('trade');
+            dispatch({ type: ACTIONS.SET_PREV_TICKER, payload: state.ticker })
+        }
+
+    }, [state.ticker]);
 
     // Update position rows with price changes
     useEffect(() => {

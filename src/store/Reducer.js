@@ -18,6 +18,12 @@ const Reducer = (state, action) => {
                 ...state,
                 ticker: action.payload
             };
+        case ACTIONS.SET_PREV_TICKER:
+            return {
+                ...state,
+                prevTicker: action.payload
+            };
+
         case ACTIONS.SET_TICKER_ROWS:
             return {
                 ...state,
@@ -63,7 +69,54 @@ const Reducer = (state, action) => {
                 ...state,
                 timeRange: action.payload
             };
+        case ACTIONS.SET_OPEN_POSITION_AMOUNT:
+            return {
+                ...state,
+                openPositionAmount: action.payload
+            };
+        case ACTIONS.SET_OPEN_ORDER_AMOUNT:
+            return {
+                ...state,
+                openOrderAmount: action.payload
+            };
+        case ACTIONS.SET_WALLET_STREAM:
+            return {
+                ...state,
+                walletStream: action.payload
+            };
+        case ACTIONS.SET_TRADE_STREAM:
+            return {
+                ...state,
+                tradeStream: action.payload
+            };
+        case ACTIONS.SET_TICKER_STREAM:
+            return {
+                ...state,
+                tickerStream: action.payload
+            };
+        
+        case ACTIONS.SET_OPEN_ORDERS_STREAM:
+            return {
+                ...state,
+                openOrdersStream: action.payload
+            };
+        case ACTIONS.SET_FILLS_STREAM:
+            return {
+                ...state,
+                fillsStream: action.payload
+            };
+        case ACTIONS.SET_FILLS_AMOUNT:
+            return {
+                ...state,
+                fillsAmount: action.payload
+            };
+        case ACTIONS.SET_DATA_UPDATED:
+            return {
+                ...state,
+                dataUpdated: action.payload
+            };
 
+            
         default:
             return state;
     }

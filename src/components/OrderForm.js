@@ -63,6 +63,7 @@ export default function OrderForm({ data }) {
   const [openSnackBar, setOpenSnackBar] = React.useState(false);
 
   const [state, dispatch] = useContext(Context);
+  const [suggestBid, setSuggestBid] = useState(0);
   const [initTickers, setInitTickers] = useState([]);
   const [openOrders, setOpenOrders] = useState([]);
   const [orderSide, setOrderSide] = useState("buy");
@@ -92,6 +93,10 @@ export default function OrderForm({ data }) {
   // status: "",
   // reduceOnly: false,
   // lastUpdateTime: null,
+
+  useEffect(() => {
+    setSuggestBid(Math.ceil(state.tickerStream?.bid));
+  }, [state.dataUpdated]);
 
   const handleTab = (event, newValue) => {
     setTab(newValue);
@@ -258,6 +263,7 @@ export default function OrderForm({ data }) {
             <Grid container spacing={2}>
               <Grid item xs={12} sm={62}>
                 <TextField
+                  value={suggestBid}
                   name="Limit Price"
                   variant="outlined"
                   required

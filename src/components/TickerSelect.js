@@ -15,7 +15,10 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 import dotenv from 'dotenv'
+import moment from "moment";
+import { nFormatter,parseMillisecondsIntoReadableTime } from "./utils/formatters";
 dotenv.config()
+var nf = new Intl.NumberFormat("en", { minimumFractionDigits: 2 });
 
 export default function TickerSelect({data}) {
   const theme = useTheme();
@@ -38,6 +41,8 @@ export default function TickerSelect({data}) {
   const [state, dispatch] = useContext(Context);
   const [initTickers, setInitTickers] = useState([]);
   const [currentTicker, setCurrentTicker] = useState({});
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [sendMsg, setSendMsg] = useState(false);
 
   const endPoint = `tickers`
   const iconBaseUrl = `https://futures.kraken.com/trade/assets/images/crypto-icons/color/`
@@ -61,7 +66,6 @@ export default function TickerSelect({data}) {
 
 }
     , [initTickers]);
-
 
   const onTickerClick = (ticker, selectedOption) => {
     dispatch({ type: ACTIONS.SET_TICKER, payload: ticker });
@@ -89,13 +93,25 @@ export default function TickerSelect({data}) {
           <TableRow>
             <TableCell className={classes.root}>Ticker</TableCell>
             <TableCell align="right" className={classes.root}>
+              MID Price
+            </TableCell>
+            <TableCell align="right" className={classes.root}>
               Mark Price
             </TableCell>
             <TableCell align="right" className={classes.root}>
               Funding Rate
             </TableCell>
             <TableCell align="right" className={classes.root}>
-              Bid
+              EST.NEXT RATE
+            </TableCell>
+            <TableCell align="right" className={classes.root}>
+              NEXT RATE IN
+            </TableCell>
+            <TableCell align="right" className={classes.root}>
+              OI (OpenInterest)
+            </TableCell>
+            <TableCell align="right" className={classes.root}>
+              VOLUME
             </TableCell>
           </TableRow>
         </TableHead>
@@ -103,19 +119,19 @@ export default function TickerSelect({data}) {
             <TableRow>
               <TableCell component="th" scope="row">
               
-                {currentTicker.pair ? (
-                <Grid container rowSpacing={0} >
-                  <Grid item xs={1}>
-                    <img src={`${iconBaseUrl}${currentTicker.pair?.toString().replace(':USD','').toLowerCase()}.svg`} alt={currentTicker.pair}  width={24} height={24}/>
+                {state.tickerStream?.pair ? (
+                <Grid container rowSpacing={1} >
+                  <Grid item xs={3}>
+                    <img src={`${iconBaseUrl}${state.tickerStream?.pair.toString().replace(':USD','').toLowerCase()}.svg`} alt={state.tickerStream?.pair}  width={24} height={24}/>
                   </Grid>
-                <Grid item xs={4}>
-                  {currentTicker.pair?.toString().replace(':','/')}
-                </Grid>
+                  <Grid item xs={4}>
+                    {state.tickerStream?.pair?.toString().replace(':','/')}
+                  </Grid>
                 </Grid>)
                 : 
                 (
-                  <Grid container rowSpacing={0} >
-                  <Grid item xs={1}>
+                  <Grid container rowSpacing={1} >
+                  <Grid item xs={3}>
                 <img src={`${iconBaseUrl}btc.svg`} alt={currentTicker.pair}  width={24} height={24}/>
                 </Grid>
                 <Grid item xs={4}>
@@ -125,14 +141,29 @@ export default function TickerSelect({data}) {
               }
               </TableCell>
               <TableCell align="right">
-                {parseFloat(currentTicker.markPrice ? currentTicker.markPrice : 0)}
+                {nf.format((state.tickerStream?.ask + state.tickerStream?.bid)/2 ?? 0)}
               </TableCell>
               <TableCell align="right">
-                {parseFloat(currentTicker.fundingRate ? currentTicker.markPrice : 0)}
+                {nf.format(state.tickerStream?.markPrice ?? 0)} <Typography style={{
+                              color: state.tickerStream?.change < 0 ? "#EE3333" : "#3C9B4A",
+                            }}>{state.tickerStream?.change?.toFixed(1)}%</Typography>
               </TableCell>
               <TableCell align="right">
-                {parseFloat(currentTicker.bid ? currentTicker.markPrice : 0)}
+                {(state.tickerStream?.relative_funding_rate*100 ?? 0).toFixed(4)}% / hr
               </TableCell>
+              <TableCell align="right">
+                {(state.tickerStream?.relative_funding_rate_prediction*100 ?? 0).toFixed(4)}% / hr
+              </TableCell>
+              <TableCell align="right">
+              {parseMillisecondsIntoReadableTime(state.tickerStream?.next_funding_rate_time-state.tickerStream?.time)}
+              </TableCell>
+              <TableCell align="right">
+              {nFormatter(state.tickerStream?.openInterest,2) ?? 0}
+              </TableCell>
+              <TableCell align="right">
+              {nFormatter(state.tickerStream?.volume,2) ?? 0}
+              </TableCell>
+
             </TableRow>
         </TableBody>
       </Table>

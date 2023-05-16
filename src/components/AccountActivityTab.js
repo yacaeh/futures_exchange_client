@@ -55,10 +55,10 @@ export default function ActivityTable() {
       <Box className={classes.appContainer}>
       <TabContext value={selectedTab}>
         <TabList onChange={handleTab} aria-label="Activity Tabs">
-          <Tab label={<Badge badgeContent={1} max={99} color="primary" >Open Positions</Badge>} value="1" />
-          <Tab label={<Badge badgeContent={1} max={99} color="primary" >Open Orders</Badge>}  value="2" />
+          <Tab label={<Badge badgeContent={state.openPositionAmount} max={99} color="primary" >Open Positions</Badge>} value="1" />
+          <Tab label={<Badge badgeContent={state.openOrderAmount} max={99} color="primary" >Open Orders</Badge>}  value="2" />
           <Tab label="Trigger Orders" value="3" />
-          <Tab label="Filled Orders" value="4" />
+          <Tab label={<Badge badgeContent={state.fillsAmount} max={99} color="primary" >Filled Orders</Badge>}  value="4" />
         </TabList>
         <TabPanel value="1">
           <OpenPositions />

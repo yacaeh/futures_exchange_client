@@ -1,7 +1,8 @@
 import { useState, useEffect,useContext } from 'react';
 import { ACTIONS, Context } from "../store/Store";
 import { Typography } from '@material-ui/core';
-
+import WebSocketService from './service/WebSocketService';
+// import  getWebSocketSignature  from './utils/getWebSocketSignature';
 // Write a wallet component that displays the user's balance and allows them to deposit and withdraw funds.
 // The wallet component should have the following features:
 // - A balance display that shows the user's balance in USD and BTC
@@ -17,6 +18,9 @@ const Wallet = () => {
     const [withdraw, setWithdraw] = useState(0);
     const [btc, setBtc] = useState(0);
     const [usd, setUsd] = useState(0);
+    const [challange, setChallange] = useState('');
+    const [signature, setSignature] = useState('');
+    const [wallet, setWallet] = useState({});
 
     const handleDeposit = (e) => {
         e.preventDefault();
@@ -36,13 +40,8 @@ const Wallet = () => {
         setUsd(data.accounts?.flex?.portfolioValue);
     }
 
-    useEffect(() => {
-        getWallet();
-    }
-    , [usd]);
-    
     return (
-        <Typography variant="subtitle1" color="textSecondary" >TOTAL EQUITY {nf.format(usd)} USD</Typography>
+        <Typography variant="subtitle1" color="textSecondary" >TOTAL EQUITY {nf.format(state.walletStream?.flex_futures?.balance_value ?? 0.0)} USD</Typography>
     )
 };
 

@@ -27,6 +27,7 @@ import OrderForm from "./components/OrderForm";
 import OpenOrders from "./components/OpenOrders";
 import OpenPositions from "./components/OpenPositions";
 import Wallet from "./components/Wallet";
+import Snackbar from '@material-ui/core/Snackbar';
 
 export default function App() {
 
