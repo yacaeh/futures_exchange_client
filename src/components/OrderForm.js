@@ -30,7 +30,7 @@ import TabPanel from "@material-ui/lab/TabPanel";
 import PropTypes from "prop-types";
 import Typography from "@material-ui/core/Typography";
 import InputAdornment from "@material-ui/core/InputAdornment";
-import MuiAlert from '@material-ui/lab/Alert';
+import MuiAlert from "@material-ui/lab/Alert";
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -40,12 +40,12 @@ export default function OrderForm({ data }) {
   const theme = useTheme();
   const useStyles = makeStyles({
     root: {
-      width: '100%',
-      '& > * + *': {
+      width: "100%",
+      "& > * + *": {
         marginTop: theme.spacing(2),
       },
     },
-  
+
     root: {
       color: theme.palette.text.secondary,
     },
@@ -64,6 +64,9 @@ export default function OrderForm({ data }) {
 
   const [state, dispatch] = useContext(Context);
   const [suggestBid, setSuggestBid] = useState(0);
+  const [leverage, setLeverage] = useState(1);
+  const [quantity, setQuantity] = useState(0);
+  const [notional, setNotional] = useState(0);
   const [initTickers, setInitTickers] = useState([]);
   const [openOrders, setOpenOrders] = useState([]);
   const [orderSide, setOrderSide] = useState("buy");
@@ -113,10 +116,13 @@ export default function OrderForm({ data }) {
   };
 
   const handleQuantityChange = (event) => {
+    setQuantity(event.target.value);
+    setNotional((event.target.value * suggestBid).toFixed(2));
     setNewOrder({ ...newOrder, size: event.target.value });
   };
 
   const handleLimitPriceChange = (event) => {
+    setSuggestBid(event.target.value);
     setNewOrder({ ...newOrder, limitPrice: event.target.value });
   };
 
@@ -124,19 +130,24 @@ export default function OrderForm({ data }) {
     setNewOrder({ ...newOrder, reduceOnly: event.target.checked });
   };
 
-
   const handleOpenSnackBar = () => {
     setOpenSnackBar(true);
   };
 
   const handleCloseSnackBar = (event, reason) => {
-    if (reason === 'clickaway') {
+    if (reason === "clickaway") {
       return;
     }
 
     setOpenSnackBar(false);
   };
 
+  const handleNotionalChange = (event) => {
+    setNotional(event.target.value);
+    setQuantity((event.target.value / suggestBid).toFixed(4));
+    setNewOrder({ ...newOrder, limitPrice: suggestBid, size: quantity });
+  };
+  
 
   const createOrderEndPoint = `createOrder`;
   // const cancelOrderEndPoint = `cancelOrder/${selectedOrder.id}`;
@@ -146,7 +157,8 @@ export default function OrderForm({ data }) {
   async function createOrder(event) {
     // handleOpenSnackBar();
     event.preventDefault();
-    
+    setNewOrder({ ...newOrder, limitPrice: suggestBid, size: quantity });
+
     const config = {
       method: "POST",
       headers: {
@@ -157,8 +169,10 @@ export default function OrderForm({ data }) {
     };
     console.log(newOrder);
     const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${createOrderEndPoint}`;
-    const response = await fetch(url, config);
-    console.log(await response.json());
+    console.log(url);
+    await fetch(url, config)
+      .then((res) => res.json())
+      .catch((err) => console.log(err));
   }
 
   // async function editOrder(order, endPoint = editOrderEndPoint) {
@@ -259,7 +273,10 @@ export default function OrderForm({ data }) {
           {/* <Tab label="Stop Loss" value="3" /> */}
         </TabList>
         <TabPanel value="1">
-          <form className={classes.form} onSubmit={(event)=> createOrder(event)}>
+          <form
+            className={classes.form}
+            onSubmit={(event) => createOrder(event)}
+          >
             <Grid container spacing={2}>
               <Grid item xs={12} sm={62}>
                 <TextField
@@ -283,6 +300,7 @@ export default function OrderForm({ data }) {
                   variant="outlined"
                   required
                   fullWidth
+                  value={quantity}
                   id="quantity"
                   label="Quantity"
                   name="quantity"
@@ -296,6 +314,69 @@ export default function OrderForm({ data }) {
                   }}
                 />
               </Grid>
+              <Grid item xs={12} sm={62}>
+                <TextField
+                  variant="outlined"
+                  value = {notional}
+                  fullWidth
+                  id="notional"
+                  label="~ Notional:"
+                  name="~ Notional:"
+                  onChange={handleNotionalChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="end">
+                        USD
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <div>
+                <Button
+                  size="small"
+                  color="primary"
+                  variant="contained"
+                  className={classes.margin}
+                  onClick={()=> handleNotionalChange({target:{value:state.walletStream?.flex_futures?.available_margin *0.25}})}
+                >
+                  25%
+                </Button>
+                <Button
+                  size="small"
+                  color="primary"
+                  variant="contained"
+                  className={classes.margin}
+                  onClick={()=> handleNotionalChange({target:{value:state.walletStream?.flex_futures?.available_margin *0.5}})}
+                >
+                  50%
+                </Button>
+                <Button
+                  size="small"
+                  color="primary"
+                  variant="contained"
+                  className={classes.margin}
+                  onClick={()=> handleNotionalChange({target:{value:state.walletStream?.flex_futures?.available_margin *0.75}})}
+                >
+                  75%
+                </Button>
+                <Button
+                  size="small"
+                  color="primary"
+                  variant="contained"
+                  className={classes.margin}
+                  onClick={()=> handleNotionalChange({target:{value:state.walletStream?.flex_futures?.available_margin}})}
+                >
+                  100%
+                </Button>
+              </div>
+              <Typography
+                className={classes.margin}
+                variant="body2"
+                color="textSecondary"
+                component="p"
+              > Available Margin : {state.walletStream?.flex_futures?.available_margin} USD
+                </Typography>
               <Grid item xs={12}>
                 <FormControlLabel
                   control={
@@ -308,6 +389,7 @@ export default function OrderForm({ data }) {
                 />
               </Grid>
             </Grid>
+
             <Button
               type="submit"
               fullWidth
@@ -330,6 +412,7 @@ export default function OrderForm({ data }) {
                   id="quantity"
                   label="Quantity"
                   name="quantity"
+                  value={quantity}
                   onChange={handleQuantityChange}
                   InputProps={{
                     startAdornment: (
@@ -340,6 +423,70 @@ export default function OrderForm({ data }) {
                   }}
                 />
               </Grid>
+              <Grid item xs={12} sm={62}>
+                <TextField
+                  variant="outlined"
+                  value = {notional}
+                  fullWidth
+                  id="notional"
+                  label="~ Notional:"
+                  name="~ Notional:"
+                  onChange={handleNotionalChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="end">
+                        USD
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <div>
+                <Button
+                  size="small"
+                  color="primary"
+                  variant="contained"
+                  className={classes.margin}
+                  onClick={()=> handleNotionalChange({target:{value:state.walletStream?.flex_futures?.available_margin *0.25}})}
+                >
+                  25%
+                </Button>
+                <Button
+                  size="small"
+                  color="primary"
+                  variant="contained"
+                  className={classes.margin}
+                  onClick={()=> handleNotionalChange({target:{value:state.walletStream?.flex_futures?.available_margin *0.5}})}
+                >
+                  50%
+                </Button>
+                <Button
+                  size="small"
+                  color="primary"
+                  variant="contained"
+                  className={classes.margin}
+                  onClick={()=> handleNotionalChange({target:{value:state.walletStream?.flex_futures?.available_margin *0.75}})}
+                >
+                  75%
+                </Button>
+                <Button
+                  size="small"
+                  color="primary"
+                  variant="contained"
+                  className={classes.margin}
+                  onClick={()=> handleNotionalChange({target:{value:state.walletStream?.flex_futures?.available_margin}})}
+                >
+                  100%
+                </Button>
+              </div>
+              <Typography
+                className={classes.margin}
+                variant="body2"
+                color="textSecondary"
+                component="p"
+              > Available Margin : {state.walletStream?.flex_futures?.available_margin} USD
+                </Typography>
+    
               <Grid item xs={12}>
                 <FormControlLabel
                   control={
@@ -351,6 +498,7 @@ export default function OrderForm({ data }) {
                   label="Reduce Only"
                 />
               </Grid>
+
             </Grid>
             <Button
               type="submit"
@@ -432,6 +580,5 @@ export default function OrderForm({ data }) {
         </TabPanel> */}
       </TabContext>
     </Container>
-    
   );
 }

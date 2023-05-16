@@ -6,8 +6,8 @@ const crypto = require('crypto');
 export const initialState = {
     openClose: false,
     openOpen: false,
-    ticker: "PI_XBTUSD",
-    prevTicker : "PI_XBTUSD",
+    ticker: "PF_XBTUSD",
+    prevTicker : "PF_XBTUSD",
     tickerRows: [],
     positionRows: [],
     prices: {},
@@ -30,6 +30,7 @@ export const initialState = {
     tickerStream: {},
     tradeStream: {},
     openOrdersStream: {},
+    openPositionsStream : {},
     fillsStream: {},
     dataUpdated: false,
 };

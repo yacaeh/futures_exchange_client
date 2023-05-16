@@ -37,6 +37,7 @@ function createData(symbol, side, price, fillTime, size, unrealizedFunding, pnlC
   return { symbol, side, price, fillTime, size, unrealizedFunding, pnlCurrency, action };
 }
 
+
 // const rows = [
 //   createData('Cupcake', 305, 3.7, 67, 4.3, false, 1),
 //   createData('Donut', 452, 25.0, 51, 4.9, false,1 ),
@@ -70,13 +71,15 @@ function stableSort(array, comparator) {
   return stabilizedThis.map((el) => el[0]);
 }
 const headCells = [
-  { id: 'lastUpdateTime', numeric: false, disablePadding: true, label: 'DATE & TIME' },
-  { id: 'symbol', numeric: false, disablePadding: false, label: 'MARKET' },
+  { id: 'Market', numeric: false, disablePadding: true, label: 'MARKET' },
   { id: 'size', numeric: false, disablePadding: false, label: 'SIZE' },
-  { id: 'price', numeric: true, disablePadding: false, label: 'PRICE' },
+  { id: 'entrymarket', numeric: false, disablePadding: false, label: 'ENTRY / MARKET' },
+  { id: 'price', numeric: true, disablePadding: false, label: 'EST.LIQ.PRICE' },
   { id: 'Leverage', numeric: true, disablePadding: false, label: 'Effective LVG' },
+  { id: 'immm', numeric: true, disablePadding: false, label: 'IM / MM' },
+  { id: 'pnlroe', numeric: true, disablePadding: false, label: 'PNL / ROE' },
+
   // { id: 'reduceOnly', numeric: false, disablePadding: false, label: 'REDUCE ONLY' },
-  // { id: 'actions', numeric: false, disablePadding: false, label: 'Cancel All Orders' },
 ];
 
   async function cancelAllOrders() {
@@ -168,7 +171,6 @@ function EnhancedTableHead(props) {
             <HighlightOffIcon fontSize="small" style={{ color: '#E2434D', margin:'5px' }}/>
             <Typography style={{ color: '#E2434D' }}>{headCell.label} </Typography></div>
         </TableCell>
-
         ))}
       </TableRow>
     </TableHead>
@@ -280,7 +282,7 @@ export default function OpenPositions() {
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(true);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [openPositions, setOpenOrders] = useState([]);
+  const [openPositions, setOpenPositions] = useState([]);
   const [rows, setRows] = useState([]);
   const endPoint = `openPositions`;
   const [loadingData, setLoadingData] = useState(true);
@@ -295,15 +297,35 @@ export default function OpenPositions() {
 
     const response = await fetch(apiUrl);
     const data = await response.json();
-    console.log(data);
-    setOpenOrders(data.openPositions);
+    console.log("getOpenPositions",data.openPositions);
+    setOpenPositions(data.openPositions);
     setRows(data.openPositions); 
     setLoadingData(false);
     dispatch({ type: ACTIONS.SET_OPEN_POSITION_AMOUNT, payload: data.openPositions?.length })
 }
 
-useEffect(() => {
+  async function updateOpenPositionsFromSocket() {
+    if (state.openPositionsStream?.positions) {
+    setRows( existingRows => {
+      return existingRows.map( row => {
+        const found = state.openPositionsStream?.positions.find( p => p?.instrument.toLowerCase() === row?.symbol.toLowerCase() );
+        if (found) {
+          return { ...row, 
+            pnl : found.pnl, effective_leverage: found.effective_leverage, 
+            entry_price: found.entry_price, index_price: found.index_price, 
+            mark_price:found.mark_price,return_on_equity : found.return_on_equity,
+            initial_margin : found.initial_margin, maintenance_margin : found.maintenance_margin,
+            liquidation_threshold : found.liquidation_threshold,
+            unrealized_funding:found.unrealized_funding
+          };
+        }
+        return row;
+      });
+    });
+}
+  }
 
+useEffect(() => {
 
   //   {
   //     'order_id': '2ce038ae-c144-4de7-a0f1-82f7f4fca864',
@@ -326,8 +348,12 @@ useEffect(() => {
   //     setLastCandle(JSON.parse(event.data.candles))
   // };
   // return () => ws.close()
-}, [refreshData]);
+}, [ refreshData]);
 
+
+useEffect(() => {
+  updateOpenPositionsFromSocket();
+}, [state.openPositionsStream]);
   // Dialog
   const [open, setOpen] = useState(false);
 
@@ -421,16 +447,17 @@ useEffect(() => {
               rowCount={rows.length}
             />
             <TableBody>
+            {/* {emptyRows > 0 && ( <TableRow><TableCell colSpan={6}>no records found</TableCell></TableRow> )} */}
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.name);
+                  // const isItemSelected = isSelected(row.name);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
-                      onClick={(event) => handleClick(event, row.name)}
+                      // onClick={(event) => handleClick(event, row.name)}
                       role="checkbox"
                     //   aria-checked={isItemSelected}
                       tabIndex={-1}
@@ -444,22 +471,34 @@ useEffect(() => {
                         /> */}
                         {/*  symbol, side, price, fillTime, size, unrealizedFunding, pnlCurrency */}
                       </TableCell>
-                      <TableCell component="th" id={labelId} scope="row" padding="none">
-                        <Typography>{moment(row.lastUpdateTime).format('HH:mm:ss')}</Typography>
-                        <Typography style={{color:'#999999'}}>{moment(row.lastUpdateTime).format('DD/MM/YYYY')}</Typography>
-                      </TableCell>
                       <TableCell align="center">
                       <img src={`${iconBaseUrl}/${row.symbol?.split('_')[1].slice(0,-3)}.svg`} alt={row.symbol?.split('_')[1].slice(0,-3)} width={24} height={24} />
                         {row.symbol}</TableCell>
-                      <TableCell align="center"><Typography style={{
+                        <TableCell align="center"><Typography style={{
                               color: row.side == "short" ? "#EE3333" : "#3C9B4A",
                             }}>{row.side}</Typography> {row.size}</TableCell>
                       <TableCell align="center">
-                      <Typography>{parseFloat(row.price).toFixed(5)}</Typography>
-                        <Typography style={{color:'#999999'}}>USD</Typography></TableCell>
+                      <Typography>{parseFloat(row.entry_price).toFixed(2)}</Typography>
+                        <Typography style={{color:'#999999'}}>USD</Typography>
+                        <Typography>{parseFloat(row.mark_price).toFixed(2)}</Typography>
+                        <Typography style={{color:'#999999'}}>USD</Typography></TableCell>                        
+                        <TableCell align="center">
+                      <Typography>{parseFloat(row.liquidation_threshold).toFixed(2)}USD</Typography>
+                        </TableCell>
+
                       <TableCell align="center">
-                      <Typography>{parseFloat(row.maxFixedLeverage).toFixed(2)}X</Typography>
-                        <Typography style={{color:'#999999'}}>USD</Typography></TableCell>
+                      <Typography>{parseFloat(row.effective_leverage).toFixed(2)}X</Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                      <Typography>{parseFloat(row.initial_margin).toFixed(2)}</Typography>
+                        <Typography style={{color:'#999999'}}>USD</Typography>
+                        <Typography>{parseFloat(row.maintenance_margin).toFixed(2)}</Typography>
+                        <Typography style={{color:'#999999'}}>USD</Typography></TableCell>                        
+
+                      <TableCell component="th" id={labelId} scope="row" padding="none">
+                      <Typography style={{color: row.pnl <0 ? "#EE3333" : "#3C9B4A"}}> {parseFloat(row.pnl).toFixed(2)} USD</Typography>
+                      <Typography style={{color: row.return_on_equity <0 ? "#EE3333" : "#3C9B4A"}}>{parseFloat(row.return_on_equity).toFixed(2)}%</Typography>
+                      </TableCell>
                       <TableCell align="center">
                       <Button onClick={() => {handleOrderDetail(row)}}>
                         <AssignmentIcon />

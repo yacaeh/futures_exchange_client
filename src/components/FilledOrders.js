@@ -246,6 +246,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function FilledOrders() {
   const classes = useStyles();
+  const [state, dispatch] = useContext(Context);
   const [order, setOrder] = useState("desc");
   const [orderBy, setOrderBy] = useState("lastUpdateTime");
   const [selected, setSelected] = useState([]);
@@ -264,11 +265,20 @@ export default function FilledOrders() {
   async function getFilledOrders() {
     const response = await fetch(apiUrl);
     const data = await response.json();
-    console.log(data);
+    console.log("getFilledOrders",data);
     setFilledOrders(data.fills);
     setRows(data.fills);
     setLoadingData(false);
   }
+
+  async function updateFilledOrdersFromSocket() {
+    console.log("state.fillsStream?.fills,",state.fillsStream?.fills)
+    setFilledOrders(state.fillsStream?.fills);
+    setRows(state.fillsStream?.fills);
+    setLoadingData(false);
+  }
+
+
 
   useEffect(() => {
     //   {
@@ -284,7 +294,7 @@ export default function FilledOrders() {
     //     'reduceOnly': False,
     //     'lastUpdateTime': '2023-04-07T15:18:04.699Z'
     // }
-
+    // updateFilledOrdersFromSocket();
     getFilledOrders();
 
     // let ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/ws/${endPoint}`)
@@ -292,7 +302,7 @@ export default function FilledOrders() {
     //     setLastCandle(JSON.parse(event.data.candles))
     // };
     // return () => ws.close()
-  }, [refreshData]);
+  }, [state.dataUpdated, refreshData]);
 
   // Dialog
   const [open, setOpen] = useState(false);
@@ -414,10 +424,10 @@ export default function FilledOrders() {
                           padding="none"
                         >
                           <Typography>
-                            {moment(row.lastUpdateTime).format("HH:mm:ss")}
+                            {moment(row.fillTime).format("HH:mm:ss")}
                           </Typography>
                           <Typography style={{ color: "#999999" }}>
-                            {moment(row.lastUpdateTime).format("DD/MM/YYYY")}
+                            {moment(row.fillTime).format("DD/MM/YYYY")}
                           </Typography>
                         </TableCell>
                         <TableCell align="center">

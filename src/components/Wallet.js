@@ -37,8 +37,14 @@ const Wallet = () => {
     async function getWallet() {
         const response = await fetch(`http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/wallets`);
         const data = await response.json();
-        setUsd(data.accounts?.flex?.portfolioValue);
+        console.log(data.accounts);
+        setWallet(data.accounts);
     }
+
+
+    useEffect(() => {
+        getWallet();
+    }, [wallet]);
 
     return (
         <Typography variant="subtitle1" color="textSecondary" >TOTAL EQUITY {nf.format(state.walletStream?.flex_futures?.balance_value ?? 0.0)} USD</Typography>

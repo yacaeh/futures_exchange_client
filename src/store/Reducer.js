@@ -94,6 +94,12 @@ const Reducer = (state, action) => {
                 ...state,
                 tickerStream: action.payload
             };
+
+        case ACTIONS.SET_OPEN_POSITIONS_STREAM:
+            return {
+                ...state,
+                openPositionsStream: action.payload
+            };
         
         case ACTIONS.SET_OPEN_ORDERS_STREAM:
             return {
