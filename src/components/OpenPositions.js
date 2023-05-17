@@ -30,12 +30,16 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import Button from '@material-ui/core/Button';
 import moment from 'moment';
 import AssignmentIcon from '@material-ui/icons/Assignment';
+import Grid from "@material-ui/core/Grid";
+import LinearWithValueLabel from "./LinearWithValueLabel";
 
 
   // "side":"short","symbol":"pf_xbtusd","price":27642.0,"fillTime":"2023-05-08T23:10:42.446Z","size":0.0002,"unrealizedFunding":3.934434050501591e-06,"pnlCurrency":"USD"}
 function createData(symbol, side, price, fillTime, size, unrealizedFunding, pnlCurrency, action) {
   return { symbol, side, price, fillTime, size, unrealizedFunding, pnlCurrency, action };
 }
+var nf = new Intl.NumberFormat("en", { minimumFractionDigits: 2 });
+
 
 
 // const rows = [
@@ -287,6 +291,10 @@ export default function OpenPositions() {
   const endPoint = `openPositions`;
   const [loadingData, setLoadingData] = useState(true);
   const [refreshData, setRefreshData] = useState(false);
+  const [currentPosition, setCurrentPosition] = useState({})
+  const [openDetail, setOpenDetail] = useState(false);
+  const [openLimit, setOpenLimit] = useState(false);
+  const [openMarket, setOpenMarket] = useState(false);
 
   const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
   
@@ -364,6 +372,70 @@ useEffect(() => {
   const handleClose = (value) => {
     setOpen(false);
   };
+  const handleDetailClose = (value) => {
+    setOpenDetail(false);
+  };
+
+  const handleLimitClose = (value) => {
+    setOpenLimit(false);
+  };
+
+  const handleMarketClose = (value) => {
+    setOpenMarket(false);
+  };
+
+  const createOrderEndPoint = `createOrder`;
+
+  async function createOrder(data, type) {
+    // handleOpenSnackBar();
+    console.log(data.side);
+    const newOrder = {
+      orderType: type,
+      side: data.side === "short" ? "long" : "short",
+      size: data.size,
+      symbol: data.symbol,
+      limitPrice: type == 'lmt' ? data.price : data.mark_price,
+      cliOrdId: "",
+      reduceOnly: false,
+      stopPrice: type == 'lmt' ? data.price : data.mark_price,
+      triggerSignal: "mark",
+      trailingStopDeviationUnit: "",
+      trailingStopMaxDeviation: "",  
+    };
+
+    const config = {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newOrder),
+    };
+    console.log(newOrder);
+    const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${createOrderEndPoint}`;
+    console.log(url);
+    await fetch(url, config)
+      .then((res) => res.json())
+      .catch((err) => console.log(err));
+  }
+
+  const handleLimit = (value) => {
+    // const cancelOrderEndPoint = `cancelOrder/${selectedOrder.id}`;
+    // const cancelAllOrderEndPoints = `cancelAllOrder`;
+    // const editOrderEndPoint = `editOrder/${selectedOrder.id}`;
+      createOrder(value, 'lmt');
+      setOpenLimit(false);
+  };
+
+  const handleMarket = (value) => {
+    // const cancelOrderEndPoint = `cancelOrder/${selectedOrder.id}`;
+    // const cancelAllOrderEndPoints = `cancelAllOrder`;
+    // const editOrderEndPoint = `editOrder/${selectedOrder.id}`;
+      createOrder(value, 'mkt');
+      setOpenMarket(false);
+  };
+
+
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -421,8 +493,22 @@ useEffect(() => {
     // editOrder(id)
     setRefreshData(!refreshData);
   }
-  const handleOrderDetail = (id) => {
-    console.log('Order Detail')
+  const handlePositionDetail = (data) => {
+    console.log('Position Detail')
+    setOpenDetail(true);
+    setCurrentPosition(data)
+  }
+
+  const handlePositionLimit = (data) => {
+    console.log('Position Limit')
+    setOpenLimit(true);
+    setCurrentPosition(data)
+  }
+
+  const handlePositionMarket = (data) => {
+    console.log('Position Market')
+    setOpenMarket(true);
+    setCurrentPosition(data)
   }
 
   return (
@@ -500,10 +586,11 @@ useEffect(() => {
                       <Typography style={{color: row.return_on_equity <0 ? "#EE3333" : "#3C9B4A"}}>{parseFloat(row.return_on_equity).toFixed(2)}%</Typography>
                       </TableCell>
                       <TableCell align="center">
-                      <Button onClick={() => {handleOrderDetail(row)}}>
+                      <Button onClick={() => {handlePositionDetail(row)}}>
                         <AssignmentIcon />
                       </Button>
-                        <Button onClick={()=> {handleLimitOrder(row)}}>{'Limit'}</Button><Button style={{color:'#EE3333'}} onClick={()=> {handleMarketOrder(row.order_id)}}>{'Market'}</Button></TableCell>
+                        <Button onClick={()=> {handlePositionLimit(row)}}>{'Limit'}</Button>
+                        <Button style={{color:'#EE3333'}} onClick={()=> {handlePositionMarket(row)}}>{'Market'}</Button></TableCell>
                     </TableRow>
                   );
                 })}
@@ -526,30 +613,224 @@ useEffect(() => {
         />
       </Paper>
       <Dialog
-        open={open}
-        onClose={handleClose}
+        open={openDetail}
+        onClose={handleDetailClose}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">{"Confirm Order Cancellation"}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          {"Position Detail"}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-          <Typography gutterBottom>
-            Are you sure?</Typography>
-            <Typography gutterBottom></Typography>
-            <Typography gutterBottom>This will cancel all of your orders and triggers for all markets.</Typography>
-            Are you sure this is what you want to do?
+          <Grid container spacing={5}>
+              <Grid item xs={2}>
+              <img src={`${iconBaseUrl}/${currentPosition.symbol
+                              ?.split("_")[1]
+                              .slice(0, -3)}.svg`}
+                            alt={currentPosition.symbol?.split("_")[1].slice(0, -3)}
+                            width={24}
+                            height={24}
+                          />
+                <img src={`${iconBaseUrl}/usd.svg`}
+                            alt={"usd"}
+                            width={24}
+                            height={24}
+                          />
+                          </Grid>
+                <Grid item xs={1}>
+                  {currentPosition.symbol?.toUpperCase()}
+                </Grid>
+              </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Type</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                  {currentPosition.orderType}
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Size</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">{currentPosition.filledSize}</Typography>
+              </Grid>
+
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Side</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">{currentPosition.side}</Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Profit/Loss (Roe)</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                  {nf.format(parseFloat(currentPosition.pnl).toFixed(2))} USD ( {parseFloat(currentPosition.return_on_equity).toFixed(2)} & )
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Position Value</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                  {currentPosition.initial_margin} USD
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Maintenance Margin</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                {nf.format(parseFloat(currentPosition.maintenance_margin).toFixed(2))} USD
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Mark Price</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                {nf.format(parseFloat(currentPosition.mark_price).toFixed(2))} USD
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Est.Liq.Price</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                {nf.format(parseFloat(currentPosition.liquidation_threshold).toFixed(2))} USD
+                </Typography>
+              </Grid>
+            </Grid>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={cancelAllOrders} style={{backgroundColor:"#3C9B4A"}}>
-            Yes
-          </Button>
-          <Button onClick={handleClose} style={{backgroundColor:"#E2434D"}}>
-            No
+          <Button onClick={handleDetailClose} style={{ backgroundColor: "#E2434D" }}>
+            Close
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={openLimit}
+        onClose={handleLimitClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Limit Close Position"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+          <Grid container spacing={5}>
+              <Grid item xs={2}>
+              <img src={`${iconBaseUrl}/${currentPosition.symbol
+                              ?.split("_")[1]
+                              .slice(0, -3)}.svg`}
+                            alt={currentPosition.symbol?.split("_")[1].slice(0, -3)}
+                            width={24}
+                            height={24}
+                          />
+                <img src={`${iconBaseUrl}/usd.svg`}
+                            alt={"usd"}
+                            width={24}
+                            height={24}
+                          />
+                          </Grid>
+                <Grid item xs={1}>
+                  {currentPosition.symbol?.toUpperCase()}
+                </Grid>
+              </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Type</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                  {currentPosition.orderType}
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Size</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">{currentPosition.filledSize}</Typography>
+              </Grid>
+
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Direction</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">{currentPosition.side}</Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Profit/Loss (Roe)</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                  {nf.format(parseFloat(currentPosition.pnl).toFixed(2))} USD
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Quantity</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                  {currentPosition.size} 
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography variant="subtitle2">Limit Price</Typography>
+              </Grid>
+              <Grid item xs={6} md={8}>
+                <Typography variant="subtitle2">
+                {nf.format(parseFloat(currentPosition.price).toFixed(2))} USD
+                </Typography>
+              </Grid>
+            </Grid>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleLimitClose} style={{ backgroundColor: "#E2434D" }}>
+            Cancel
+          </Button>
+          <Button onClick={()=>handleLimit(currentPosition)} style={{ backgroundColor: "#3C9B4A" }}>
+            Close Position
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+
+
+      <Dialog
+        open={openMarket}
+        onClose={handleMarketClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Market Close Position"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+          {`Are you sure you want to Market Close your Long position of ${currentPosition.size} contracts in ${currentPosition.symbol}?
+This is an Immediate or Cancel (IOC) order executed at 1% beyond the current best bid or offer.
+Please note that your close order may not get fully filled if there is insufficient liquidity.`}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleMarketClose} style={{ backgroundColor: "#E2434D" }}>
+            No
+          </Button>
+          <Button onClick={()=>handleMarket(currentPosition)} style={{ backgroundColor: "#3C9B4A" }}>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
 
     </div>
   );
