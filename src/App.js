@@ -74,7 +74,7 @@ export default function App() {
         <Toolbar>
           <BarChartIcon className={classes.icon} />
           <Typography variant="h6" noWrap color="textSecondary" className={classes.title}>
-            Perpetual Futures Strategy
+            Perpetual Futures Strategy Dev : {process.env.REACT_APP_IS_DEV }
           </Typography>
           <Leverage />
           <Wallet />
