@@ -250,7 +250,7 @@ const Store = ({ children }) => {
             if (data.feed === "open_orders_verbose") {
                 console.log("open_orders_verbose:",data);
                 dispatch({ type: ACTIONS.SET_OPEN_ORDERS_STREAM, payload: data })
-                dispatch({ type: ACTIONS.SET_OPEN_POSITION_AMOUNT, payload: data.orders?.length })
+                dispatch({ type: ACTIONS.SET_OPEN_ORDER_AMOUNT, payload: data.orders?.length })
             }
             if (data.feed === "fills_snapshot") {
                 console.log("fills_snapshot:",data);

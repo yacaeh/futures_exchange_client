@@ -299,12 +299,12 @@ export default function OpenPositions() {
 useEffect(() => {
 
   getOpenPositions();
-}, [ refreshData, state.openPositionAmount]);
+}, [ state.dataUpdated,refreshData, state.openPositionAmount]);
 
 
 useEffect(() => {
   updateOpenPositionsFromSocket();
-}, [state.openPositionsStream]);
+}, [state.dataUpdated,refreshData, state.openPositionsStream]);
   // Dialog
   const [open, setOpen] = useState(false);
 

@@ -368,6 +368,28 @@ export default function OpenOrders() {
 
   }
 
+  async function updateOpenOrdersFromSocket() {
+    if (!state.openOrdersStream) {
+    setRows( existingRows => {
+      return existingRows.map( row => {
+        const found = state.openOrdersStream?.orders.find( p => p?.instrument.toLowerCase() === row?.symbol.toLowerCase() );
+        if (found) {
+          return { ...row, 
+            // pnl : found.pnl, effective_leverage: found.effective_leverage, 
+            // entry_price: found.entry_price, index_price: found.index_price, 
+            // mark_price:found.mark_price,return_on_equity : found.return_on_equity,
+            // initial_margin : found.initial_margin, maintenance_margin : found.maintenance_margin,
+            // liquidation_threshold : found.liquidation_threshold,
+            // unrealized_funding:found.unrealized_funding
+          };
+        }
+        return row;
+      });
+    });
+}
+  }
+
+
   useEffect(() => {
     //   {
     //     'order_id': '2ce038ae-c144-4de7-a0f1-82f7f4fca864',
@@ -390,8 +412,12 @@ export default function OpenOrders() {
     //     setLastCandle(JSON.parse(event.data.candles))
     // };
     // return () => ws.close()
-  }, [refreshData,state.openOrderAmount]);
+  }, [state.dataUpdated,refreshData,state.openOrderAmount]);
 
+  useEffect(() => {
+    updateOpenOrdersFromSocket();
+  }, [state.dataUpdated,refreshData, state.openOrdersStream]);
+  
   // Dialog
   const [open, setOpen] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
