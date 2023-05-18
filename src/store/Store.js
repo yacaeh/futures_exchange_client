@@ -227,7 +227,7 @@ const Store = ({ children }) => {
                 ws.send(
                     JSON.stringify({
                         "event": "subscribe",
-                        "feed": feed, //"open_positions", "balances", "open_orders_verbose"
+                        "feed": feed, //"open_positions", "balances", "open_orders"
                         "api_key": process.env.REACT_APP_PUBLIC_API_KEY,
                         "original_challenge": challange,
                         "signed_challenge": signedChallenge,
@@ -247,8 +247,8 @@ const Store = ({ children }) => {
 
             }
 
-            if (data.feed === "open_orders_verbose") {
-                console.log("open_orders_verbose:",data);
+            if (data.feed === "open_orders") {
+                console.log("open_orders:",data);
                 dispatch({ type: ACTIONS.SET_OPEN_ORDERS_STREAM, payload: data })
                 dispatch({ type: ACTIONS.SET_OPEN_ORDER_AMOUNT, payload: data.orders?.length })
             }
@@ -359,7 +359,7 @@ const Store = ({ children }) => {
     useEffect(() => {
         streamPrivateFeed("balances");
         streamPrivateFeed("open_positions");
-        streamPrivateFeed("open_orders_verbose");
+        streamPrivateFeed("open_orders");
         streamPrivateFeed("fills");
     }, []);
 
