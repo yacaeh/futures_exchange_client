@@ -35,7 +35,7 @@ const Wallet = () => {
     }
 
     async function getWallet() {
-        const response = await fetch(`http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/wallets`);
+        const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/wallets`);
         const data = await response.json();
         console.log(data.accounts);
         setWallet(data.accounts);
