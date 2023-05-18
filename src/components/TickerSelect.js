@@ -65,7 +65,7 @@ export default function TickerSelect({data}) {
     // return () => ws.close()
 
 }
-    , [initTickers]);
+    , []);
 
   const onTickerClick = (ticker, selectedOption) => {
     dispatch({ type: ACTIONS.SET_TICKER, payload: ticker });

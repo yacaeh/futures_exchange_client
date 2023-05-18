@@ -299,7 +299,7 @@ export default function OpenPositions() {
 useEffect(() => {
 
   getOpenPositions();
-}, [ refreshData]);
+}, [ refreshData, state.openPositionAmount]);
 
 
 useEffect(() => {
@@ -346,7 +346,7 @@ useEffect(() => {
       symbol: data.symbol,
       limitPrice: type == 'lmt' ? data.price : data.mark_price,
       cliOrdId: "",
-      reduceOnly: false,
+      reduceOnly: true,
       stopPrice: type == 'lmt' ? data.price : data.mark_price,
       triggerSignal: "mark",
       trailingStopDeviationUnit: "",

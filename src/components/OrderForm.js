@@ -31,6 +31,7 @@ import PropTypes from "prop-types";
 import Typography from "@material-ui/core/Typography";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import MuiAlert from "@material-ui/lab/Alert";
+var nf = new Intl.NumberFormat("en", { minimumFractionDigits: 2 });
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -145,7 +146,7 @@ export default function OrderForm({ data }) {
   const handleNotionalChange = (event) => {
     setNotional(event.target.value.toFixed(2));
     setQuantity((event.target.value / suggestBid).toFixed(4));
-    setNewOrder({ ...newOrder, limitPrice: suggestBid, size: quantity });
+    setNewOrder({ ...newOrder, limitPrice: suggestBid, size: (event.target.value / suggestBid).toFixed(4) });
   };
   
 
@@ -316,7 +317,7 @@ export default function OrderForm({ data }) {
                 variant="body2"
                 color="textSecondary"
                 component="p"
-              > Available Margin : {state.walletStream?.flex_futures?.available_margin} USD
+              > Available Margin : {nf.format(state.walletStream?.flex_futures?.available_margin)} USD
                 </Typography>
               <Grid item xs={12}>
                 <FormControlLabel

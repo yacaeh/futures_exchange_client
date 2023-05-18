@@ -390,7 +390,7 @@ export default function OpenOrders() {
     //     setLastCandle(JSON.parse(event.data.candles))
     // };
     // return () => ws.close()
-  }, [refreshData]);
+  }, [refreshData,state.openOrderAmount]);
 
   // Dialog
   const [open, setOpen] = useState(false);
