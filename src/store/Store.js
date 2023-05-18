@@ -33,6 +33,9 @@ export const initialState = {
     openPositionsStream : {},
     fillsStream: {},
     dataUpdated: false,
+    openSnackbar: false,
+    snackbarMessage: "",
+    snackbarColor : "#43a047"
 };
 
 export const ACTIONS = {
@@ -60,6 +63,9 @@ export const ACTIONS = {
     SET_FILLS_STREAM : 'SET_FILLS_STREAM',
     SET_FILLS_AMOUNT : 'SET_FILLS_AMOUNT',
     SET_DATA_UPDATED : 'SET_DATA_UPDATED',
+    SET_OPEN_SNACKBAR : 'SET_OPEN_SNACKBAR',
+    SET_SNACKBAR_MESSAGE : 'SET_SNACKBAR_MESSAGE',
+    SET_SNACKBAR_COLOR : 'SET_SNACKBAR_COLOR'
 }
 const wsurl = `wss://futures.kraken.com/ws/v1`
 const getWebSocketSignature = (challange, secret) => {
@@ -96,10 +102,10 @@ const Store = ({ children }) => {
 
     // Initial data for position table
     async function getPositionRows() {
-        const response = await fetch("http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/account");
+        const response = await fetch("${process.env.REACT_APP_SERVER_URL}/account");
         const data = await response.json();
 
-        const responseDos = await fetch("http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/trades?form=last");
+        const responseDos = await fetch("${process.env.REACT_APP_SERVER_URL}/trades?form=last");
         const dataDos = await responseDos.json();
         const entryPrices = {}
         dataDos.forEach(openPos => entryPrices[openPos.symbol] = openPos.priceMargin)
@@ -115,21 +121,21 @@ const Store = ({ children }) => {
 
     // Initial data for wallet table
     async function getWalletRows() {
-        const response = await fetch("http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/wallet");
+        const response = await fetch("${process.env.REACT_APP_SERVER_URL}/wallet");
         const data = await response.json();
         dispatch({ type: ACTIONS.SET_WALLET_ROWS, payload: data });
     }
 
     // Initial data for PnL table
     async function getPnLRows() {
-        const response = await fetch("http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/trades?form=summary");
+        const response = await fetch("${process.env.REACT_APP_SERVER_URL}/trades?form=summary");
         const data = await response.json();
         dispatch({ type: ACTIONS.SET_PNL_ROWS, payload: data });
     }
 
     // Initial data for trades table
     async function getTradeRows() {
-        const response = await fetch("http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/trades");
+        const response = await fetch("${process.env.REACT_APP_SERVER_URL}/trades");
         const data = await response.json();
         dispatch({ type: ACTIONS.SET_TRADE_ROWS, payload: data });
     }
@@ -144,7 +150,7 @@ const Store = ({ children }) => {
     // Price stream for position table
     async function streamPrices() {
 
-        let ws = new WebSocket("ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/market-stream");
+        let ws = new WebSocket("ws://${process.env.REACT_APP_SERVER_URL}/market-stream");
         let oldPrices = {}
         ws.onmessage = (event) => {
 
@@ -174,7 +180,7 @@ const Store = ({ children }) => {
     }
 
     async function streamAccountUpdates() {
-        let ws = new WebSocket("ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/user-stream");
+        let ws = new WebSocket("ws://${process.env.REACT_APP_SERVER_URL}/user-stream");
         ws.onmessage = (event) => {
             const update = JSON.parse(event.data)
             if (["ACCOUNT_UPDATE", "outboundAccountPosition"].indexOf(update.e) !== -1) {
@@ -301,19 +307,6 @@ const Store = ({ children }) => {
         };
         ws.onmessage = (evt) => {
             const data = JSON.parse(evt.data);
-            // if (state.prevTicker !== state.ticker){
-            //     console.log(`Unsubscribe This ${state.prevTicker} and subscribe ${state.ticker}`)
-            //     ws.send(
-            //         JSON.stringify({
-            //             "event": "unsubscribe",
-            //             "feed": feed, // "ticker", "trade"
-            //             "product_ids": [
-            //                 state.prevTicker
-            //             ]
-            //           })
-            //     )    
-            //     dispatch({ type: ACTIONS.SET_PREV_TICKER, payload: state.ticker })
-            // }
 
             if (data.feed === "ticker") {
                 console.log(`Subscribed to ticker ${state.ticker}, ${data.product_id}`, data);
@@ -385,40 +378,6 @@ const Store = ({ children }) => {
 
     // Update position rows with price changes
     useEffect(() => {
-        // const updatePrice = (row) => {
-        //     const notional = (price, positionAmt) => {
-        //         return parseFloat(price) * parseFloat(positionAmt);
-        //     };
-
-        //     const unRealizedProfit = (price, entryPrice, positionAmt) => {
-        //         return notional(price, positionAmt) - notional(entryPrice, positionAmt);
-        //     };
-
-        //     const margin = (price, entryPrice, positionAmt, leverage) => {
-        //         return -notional(entryPrice, positionAmt) / leverage + unRealizedProfit(price, entryPrice, positionAmt);
-        //     };
-
-        //     row.markPrice = state.prices[row.symbol].markPrice;
-        //     row.markTick = state.prices[row.symbol].markTick;
-        //     row.spotPrice = state.prices[row.symbol].spotPrice;
-        //     row.spotTick = state.prices[row.symbol].spotTick;
-        //     row.fundingRate = state.prices[row.symbol].fundingRate;
-        //     row.fundingTime = state.prices[row.symbol].fundingTime;
-
-        //     row.notional = notional(row.markPrice, row.positionAmt)
-        //     row.marginNotional = notional(row.spotPrice, row.marginPositionAmt)
-        //     row.margin = margin(row.markPrice, row.entryPrice, row.positionAmt, row.leverage)
-        //     row.unRealizedProfit = unRealizedProfit(row.markPrice, row.entryPrice, row.positionAmt)
-        //     row.unRealizedProfitTick = add_tick(row.unRealizedProfit, 0)
-        //     row.marginUnRealizedProfit = unRealizedProfit(row.spotPrice, row.marginEntryPrice, row.marginPositionAmt)
-        //     row.marginUnRealizedProfitTick = add_tick(row.marginUnRealizedProfit, 0)
-        //     row.totalUnRealizedProfit = parseFloat(row.unRealizedProfit) + parseFloat(row.marginUnRealizedProfit)
-        //     row.totalUnRealizedProfitTick = add_tick(row.totalUnRealizedProfit, 0)
-
-        //     return row;
-        // };
-        // const data = state.positionRows.map((row) => updatePrice(row))
-        // dispatch({ type: ACTIONS.SET_POSITION_ROWS, payload: data });
     }, [state.prices]);
 
     return (

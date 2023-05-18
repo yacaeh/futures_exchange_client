@@ -42,7 +42,7 @@ const CandleChart = ({ data, decimals }) => {
     // const endPoint = `klines/${data}/${state.ticker}?interval=${state.candleInterval}`
     const endPoint = `charts/${data}/${state.ticker}/${state.candleInterval}`
     useEffect(() => {
-        const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`
+        const apiUrl = `${process.env.REACT_APP_SERVER_URL}/${endPoint}`
 
         async function getInitCandles() {
             const response = await fetch(apiUrl);
@@ -54,7 +54,7 @@ const CandleChart = ({ data, decimals }) => {
 
         getInitCandles();
 
-        // let ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/ws/${endPoint}`)
+        // let ws = new WebSocket(`ws://${process.env.REACT_APP_SERVER_URL}/ws/${endPoint}`)
         // ws.onmessage = (event) => {
         //     setLastCandle(JSON.parse(event.data.candles))
         // };

@@ -47,8 +47,8 @@ export default function TickerSelect({data}) {
   const endPoint = `tickers`
   const iconBaseUrl = `https://futures.kraken.com/trade/assets/images/crypto-icons/color/`
   useEffect(() => {
-    console.log(process.env.REACT_APP_IP_ADDRESS)
-    const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`
+    console.log(process.env.REACT_APP_SERVER_URL)
+    const apiUrl = `${process.env.REACT_APP_SERVER_URL}/${endPoint}`
 
     async function getInitTickers() {
         const response = await fetch(apiUrl);
@@ -58,7 +58,7 @@ export default function TickerSelect({data}) {
     //  "markPrice":40.637,"bid":40.592,"bidSize":37.6,"ask":40.703,"askSize":8.9,"vol24h":31.7,"volumeQuote":1249.6157,"openInterest":376.3,"open24h":39.196,"indexPrice":40.652,"last":39.575,"lastTime":"2023-05-03T18:35:23.794Z","lastSize":0.1,"suspended":false,"fundingRate":-0.000841780209375,"fundingRatePrediction":-0.000873416548333342,"postOnly":false
     getInitTickers();
 
-    // let ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/ws/${endPoint}`)
+    // let ws = new WebSocket(`ws://${process.env.REACT_APP_SERVER_URL}/ws/${endPoint}`)
     // ws.onmessage = (event) => {
     //     setLastCandle(JSON.parse(event.data.candles))
     // };

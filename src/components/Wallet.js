@@ -42,9 +42,9 @@ const Wallet = () => {
     }
 
 
-    useEffect(() => {
-        getWallet();
-    }, [wallet]);
+    // useEffect(() => {
+    //     getWallet();
+    // }, [wallet]);
 
     return (
         <Typography variant="subtitle1" color="textSecondary" >TOTAL EQUITY {nf.format(state.walletStream?.flex_futures?.balance_value ?? 0.0)} USD</Typography>

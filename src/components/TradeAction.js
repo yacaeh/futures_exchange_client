@@ -50,7 +50,7 @@ export const TradeAction = () => {
             },
             body: JSON.stringify(positions)
         }
-        const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`
+        const url = `${process.env.REACT_APP_SERVER_URL}/${endPoint}`
         const response = await fetch(url, config)
         console.log(await response.json())
     }

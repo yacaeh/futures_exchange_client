@@ -260,7 +260,7 @@ export default function FilledOrders() {
   const [refreshData, setRefreshData] = useState(false);
   const [currentOrder, setCurrentOrder] = useState({});
 
-  const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
+  const apiUrl = `${process.env.REACT_APP_SERVER_URL}/${endPoint}`;
 
   async function getFilledOrders() {
     const response = await fetch(apiUrl);
@@ -297,7 +297,7 @@ export default function FilledOrders() {
     // updateFilledOrdersFromSocket();
     getFilledOrders();
 
-    // let ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/ws/${endPoint}`)
+    // let ws = new WebSocket(`ws://${process.env.REACT_APP_SERVER_URL}/ws/${endPoint}`)
     // ws.onmessage = (event) => {
     //     setLastCandle(JSON.parse(event.data.candles))
     // };

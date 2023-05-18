@@ -33,7 +33,7 @@ const LineChart = ({ endPoint, title, decimals }) => {
     const theme = useTheme();
 
     useEffect(() => {
-        const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`
+        const apiUrl = `${process.env.REACT_APP_SERVER_URL}/${endPoint}`
 
         async function getLines() {
             const response = await fetch(apiUrl);

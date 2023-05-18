@@ -143,7 +143,7 @@ export default function OrderForm({ data }) {
   };
 
   const handleNotionalChange = (event) => {
-    setNotional(event.target.value);
+    setNotional(event.target.value.toFixed(2));
     setQuantity((event.target.value / suggestBid).toFixed(4));
     setNewOrder({ ...newOrder, limitPrice: suggestBid, size: quantity });
   };
@@ -168,87 +168,28 @@ export default function OrderForm({ data }) {
       body: JSON.stringify(newOrder),
     };
     console.log(newOrder);
-    const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${createOrderEndPoint}`;
+    const url = `${process.env.REACT_APP_SERVER_URL}/${createOrderEndPoint}`;
     console.log(url);
     await fetch(url, config)
-      .then((res) => res.json())
-      .catch((err) => console.log(err));
+      .then((res) => {
+        res.json();
+        console.log("openSnackbar",res);
+      openSnackbar("Order Successful", '#43a047')}
+
+      )
+      .catch((err) => {console.log(err);
+        openSnackbar(err.message, '#E2434D')
+      });
   }
 
-  // async function editOrder(order, endPoint = editOrderEndPoint) {
-  //   const config = {
-  //     method: "PUT",
-  //     headers: {
-  //       Accept: "application/json",
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: JSON.stringify(order),
-  //   };
-  //   const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
-  //   const response = await fetch(url, config);
-  //   console.log(await response.json());
-  // }
+  const openSnackbar = (message, color = '#43a047') => {
+    dispatch({ type: ACTIONS.SET_OPEN_SNACKBAR, payload: true })
+    dispatch({ type: ACTIONS.SET_SNACKBAR_MESSAGE, payload: message })
+    dispatch({ type: ACTIONS.SET_SNACKBAR_COLOR, payload: color }) //  '#43a047' #E2434D
+  }
 
-  // async function cancelOrder(order, endPoint = cancelOrderEndPoint) {
-  //   const config = {
-  //     method: "DELETE",
-  //     headers: {
-  //       Accept: "application/json",
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: JSON.stringify(order),
-  //   };
-  //   const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
-  //   const response = await fetch(url, config);
-  //   console.log(await response.json());
-  // }
-
-  // async function cancelAllOrder(order, endPoint = cancelAllOrderEndPoints) {
-  //   const config = {
-  //     method: "DELETE",
-  //     headers: {
-  //       Accept: "application/json",
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: JSON.stringify(order),
-  //   };
-  //   const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
-  //   const response = await fetch(url, config);
-  //   console.log(await response.json());
-  // }
 
   const endPoint = `openOrders`;
-  // useEffect(() => {
-  //   const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
-
-  //   async function getOpenOrders() {
-  //     const response = await fetch(apiUrl);
-  //     const data = await response.json();
-  //     setOpenOrders(data.openOrders);
-  //   }
-
-  //   //   {
-  //   //     'order_id': '2ce038ae-c144-4de7-a0f1-82f7f4fca864',
-  //   //     'symbol': 'pi_ethusd',
-  //   //     'side': 'buy',
-  //   //     'orderType': 'lmt',
-  //   //     'limitPrice': 1200,
-  //   //     'unfilledSize': 100,
-  //   //     'receivedTime': '2023-04-07T15:18:04.699Z',
-  //   //     'status': 'untouched',
-  //   //     'filledSize': 0,
-  //   //     'reduceOnly': False,
-  //   //     'lastUpdateTime': '2023-04-07T15:18:04.699Z'
-  //   // }
-
-  //   getOpenOrders();
-
-  //   // let ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/ws/${endPoint}`)
-  //   // ws.onmessage = (event) => {
-  //   //     setLastCandle(JSON.parse(event.data.candles))
-  //   // };
-  //   // return () => ws.close()
-  // }, [openOrders]);
 
   return (
     <Container component="main" maxWidth="xs">

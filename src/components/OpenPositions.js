@@ -14,13 +14,6 @@ import TableSortLabel from '@material-ui/core/TableSortLabel';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import Checkbox from '@material-ui/core/Checkbox';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
-import FilterListIcon from '@material-ui/icons/FilterList';
-import DeleteIcon from '@material-ui/icons/Delete';
 import HighlightOffIcon from '@material-ui/icons/HighlightOff';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
@@ -31,7 +24,6 @@ import Button from '@material-ui/core/Button';
 import moment from 'moment';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import Grid from "@material-ui/core/Grid";
-import LinearWithValueLabel from "./LinearWithValueLabel";
 
 
   // "side":"short","symbol":"pf_xbtusd","price":27642.0,"fillTime":"2023-05-08T23:10:42.446Z","size":0.0002,"unrealizedFunding":3.934434050501591e-06,"pnlCurrency":"USD"}
@@ -40,12 +32,6 @@ function createData(symbol, side, price, fillTime, size, unrealizedFunding, pnlC
 }
 var nf = new Intl.NumberFormat("en", { minimumFractionDigits: 2 });
 
-
-
-// const rows = [
-//   createData('Cupcake', 305, 3.7, 67, 4.3, false, 1),
-//   createData('Donut', 452, 25.0, 51, 4.9, false,1 ),
-// ];
 const cancelAllOrderEndPoints = `cancelAllOrder`;
 const iconBaseUrl = `https://futures.kraken.com/trade/assets/images/crypto-icons/color/`
 
@@ -96,7 +82,7 @@ const headCells = [
         "Content-Type": "application/json",
       }
     };
-    const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${cancelAllOrderEndPoints}`;
+    const url = `${process.env.REACT_APP_SERVER_URL}/${cancelAllOrderEndPoints}`;
     // const response = await fetch(url, config);
     // console.log(await response.json());
   }
@@ -111,7 +97,7 @@ const headCells = [
         "Content-Type": "application/json",
       }
     };
-    const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/cancelOrder/${id}`;
+    const url = `${process.env.REACT_APP_SERVER_URL}/cancelOrder/${id}`;
     const response = await fetch(url, config);
     console.log(await response.json());
   }
@@ -125,7 +111,7 @@ const headCells = [
       },
       body: JSON.stringify(order),
     };
-    const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/editOrder/${order.order_id}`;
+    const url = `${process.env.REACT_APP_SERVER_URL}/editOrder/${order.order_id}`;
     const response = await fetch(url, config);
     console.log(await response.json());
   }
@@ -222,29 +208,6 @@ const EnhancedTableToolbar = (props) => {
         [classes.highlight]: numSelected > 0,
       })}
     >
-      {/* {numSelected > 0 ? (
-        <Typography className={classes.title} color="inherit" variant="subtitle1" component="div">
-          {numSelected} selected
-        </Typography>
-      ) : ( */}
-        {/* <Typography className={classes.title} variant="h6" id="tableTitle" component="div">
-          Open Positions
-        </Typography> */}
-      {/* )} */}
-
-      {/* {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton aria-label="delete">
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Tooltip title="Filter list">
-          <IconButton aria-label="filter list">
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
-      )} */}
     </Toolbar>
   );
 };
@@ -296,7 +259,7 @@ export default function OpenPositions() {
   const [openLimit, setOpenLimit] = useState(false);
   const [openMarket, setOpenMarket] = useState(false);
 
-  const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
+  const apiUrl = `${process.env.REACT_APP_SERVER_URL}/${endPoint}`;
   
   async function getOpenPositions() {
     // Profit/Loss (RoE) = Price Difference X (Contract Notional Value / Exit Price) 
@@ -335,27 +298,7 @@ export default function OpenPositions() {
 
 useEffect(() => {
 
-  //   {
-  //     'order_id': '2ce038ae-c144-4de7-a0f1-82f7f4fca864',
-  //     'symbol': 'pi_ethusd',
-  //     'side': 'buy',
-  //     'orderType': 'lmt',
-  //     'price': 1200,
-  //     'unfilledSize': 100,
-  //     'receivedTime': '2023-04-07T15:18:04.699Z',
-  //     'status': 'untouched',
-  //     'filledSize': 0,
-  //     'reduceOnly': False,
-  //     'lastUpdateTime': '2023-04-07T15:18:04.699Z'
-  // }
-
   getOpenPositions();
-
-  // let ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/ws/${endPoint}`)
-  // ws.onmessage = (event) => {
-  //     setLastCandle(JSON.parse(event.data.candles))
-  // };
-  // return () => ws.close()
 }, [ refreshData]);
 
 
@@ -384,6 +327,13 @@ useEffect(() => {
     setOpenMarket(false);
   };
 
+  const openSnackbar = (message, color = '#43a047') => {
+    dispatch({ type: ACTIONS.SET_OPEN_SNACKBAR, payload: true })
+    dispatch({ type: ACTIONS.SET_SNACKBAR_MESSAGE, payload: message })
+    dispatch({ type: ACTIONS.SET_SNACKBAR_COLOR, payload: color }) //  '#43a047' #E2434D
+  }
+
+
   const createOrderEndPoint = `createOrder`;
 
   async function createOrder(data, type) {
@@ -391,7 +341,7 @@ useEffect(() => {
     console.log(data.side);
     const newOrder = {
       orderType: type,
-      side: data.side === "short" ? "long" : "short",
+      side: data.side === "short" ? "buy" : "sell",
       size: data.size,
       symbol: data.symbol,
       limitPrice: type == 'lmt' ? data.price : data.mark_price,
@@ -412,11 +362,18 @@ useEffect(() => {
       body: JSON.stringify(newOrder),
     };
     console.log(newOrder);
-    const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${createOrderEndPoint}`;
+    const url = `${process.env.REACT_APP_SERVER_URL}/${createOrderEndPoint}`;
     console.log(url);
     await fetch(url, config)
-      .then((res) => res.json())
-      .catch((err) => console.log(err));
+      .then((res) => {
+        res.json();
+        console.log("openSnackbar",res);
+      openSnackbar("Order Successful", '#43a047')}
+
+      )
+      .catch((err) => {console.log(err);
+        openSnackbar(err.message, '#E2434D')
+      });
   }
 
   const handleLimit = (value) => {
@@ -497,6 +454,8 @@ useEffect(() => {
     console.log('Position Detail')
     setOpenDetail(true);
     setCurrentPosition(data)
+    dispatch({ type: ACTIONS.SET_OPEN_SNACKBAR, payload: true })
+
   }
 
   const handlePositionLimit = (data) => {
@@ -583,7 +542,7 @@ useEffect(() => {
 
                       <TableCell component="th" id={labelId} scope="row" padding="none">
                       <Typography style={{color: row.pnl <0 ? "#EE3333" : "#3C9B4A"}}> {parseFloat(row.pnl).toFixed(2)} USD</Typography>
-                      <Typography style={{color: row.return_on_equity <0 ? "#EE3333" : "#3C9B4A"}}>{parseFloat(row.return_on_equity).toFixed(2)}%</Typography>
+                      <Typography style={{color: row.return_on_equity <0 ? "#EE3333" : "#3C9B4A"}}>{parseFloat(row.return_on_equity*100).toFixed(3)}%</Typography>
                       </TableCell>
                       <TableCell align="center">
                       <Button onClick={() => {handlePositionDetail(row)}}>
@@ -655,7 +614,7 @@ useEffect(() => {
                 <Typography variant="subtitle2">Size</Typography>
               </Grid>
               <Grid item xs={6} md={8}>
-                <Typography variant="subtitle2">{currentPosition.filledSize}</Typography>
+                <Typography variant="subtitle2">{currentPosition.size}</Typography>
               </Grid>
 
               <Grid item xs={4}>
@@ -669,7 +628,7 @@ useEffect(() => {
               </Grid>
               <Grid item xs={6} md={8}>
                 <Typography variant="subtitle2">
-                  {nf.format(parseFloat(currentPosition.pnl).toFixed(2))} USD ( {parseFloat(currentPosition.return_on_equity).toFixed(2)} & )
+                  {nf.format(parseFloat(currentPosition.pnl).toFixed(2))} USD ( {parseFloat(currentPosition.return_on_equity*100).toFixed(2)} & )
                 </Typography>
               </Grid>
               <Grid item xs={4}>
@@ -757,7 +716,7 @@ useEffect(() => {
                 <Typography variant="subtitle2">Size</Typography>
               </Grid>
               <Grid item xs={6} md={8}>
-                <Typography variant="subtitle2">{currentPosition.filledSize}</Typography>
+                <Typography variant="subtitle2">{currentPosition.size}</Typography>
               </Grid>
 
               <Grid item xs={4}>
@@ -787,7 +746,7 @@ useEffect(() => {
               </Grid>
               <Grid item xs={6} md={8}>
                 <Typography variant="subtitle2">
-                {nf.format(parseFloat(currentPosition.price).toFixed(2))} USD
+                {nf.format(parseFloat(state.tickerStream?.markPrice).toFixed(2))} USD
                 </Typography>
               </Grid>
             </Grid>

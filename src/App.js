@@ -21,17 +21,25 @@ import TradeTable from "./components/TradeTable";
 import PnLTable from "./components/PnLTable";
 import TickerTable from "./components/TickerTable";
 import BarChartIcon from '@material-ui/icons/BarChart';
-import { Context } from './store/Store'
+import {ACTIONS, Context } from './store/Store'
 import TickerSelect from "./components/TickerSelect";
 import OrderForm from "./components/OrderForm";
 import OpenOrders from "./components/OpenOrders";
 import OpenPositions from "./components/OpenPositions";
 import Wallet from "./components/Wallet";
+import CustomizedSnackbars from "./components/CustomizedSnackbars";
 import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
+import Leverage from './components/Leverage'
+import SnackbarContent from '@material-ui/core/SnackbarContent';
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 export default function App() {
 
-  const [state] = useContext(Context);
+  const [state, dispatch] = useContext(Context);
 
   const useStyles = makeStyles((theme) => {
     return {
@@ -54,6 +62,11 @@ export default function App() {
     { data: "mark", decimals: 4 },
   ]
 
+  const openSnackbar = () => {
+    dispatch({ type: ACTIONS.SET_OPEN_SNACKBAR, payload: true })
+    dispatch({ type: ACTIONS.SET_SNACKBAR_MESSAGE, payload: "This is a test" })
+  }
+
   return (
     <Fragment>
       <CssBaseline />
@@ -63,6 +76,7 @@ export default function App() {
           <Typography variant="h6" noWrap color="textSecondary" className={classes.title}>
             Perpetual Futures Strategy
           </Typography>
+          <Leverage />
           <Wallet />
         </Toolbar>
       </AppBar>
@@ -86,7 +100,22 @@ export default function App() {
           ))}
           <ActivityTable/>
         </Grid>
+        {/* <CustomizedSnackbars /> */}
       </Container>
+      <Snackbar
+        anchorOrigin={{ 'vertical':"bottom", 'horizontal':"right" }}
+        open={state.openSnackbar}
+        onClose={()=> {
+          dispatch({ type: ACTIONS.SET_OPEN_SNACKBAR, payload: false })}}
+        message={state.snackbarMessage}
+        key={'bottom' + 'right'}
+      >
+          <SnackbarContent style={{
+            backgroundColor: state.snackbarColor
+          }}
+          message={<span id="client-snackbar">{state.snackbarMessage}</span>}
+        />
+      </Snackbar>
     </Fragment >
   );
 }

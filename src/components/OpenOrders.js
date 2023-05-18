@@ -141,7 +141,7 @@ async function cancelAllOrders() {
       "Content-Type": "application/json",
     },
   };
-  const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${cancelAllOrderEndPoints}`;
+  const url = `${process.env.REACT_APP_SERVER_URL}/${cancelAllOrderEndPoints}`;
   const response = await fetch(url, config);
   console.log(await response.json());
 }
@@ -156,7 +156,7 @@ async function cancelOrder(id) {
       "Content-Type": "application/json",
     },
   };
-  const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/cancelOrder/${id}`;
+  const url = `${process.env.REACT_APP_SERVER_URL}/cancelOrder/${id}`;
   const response = await fetch(url, config);
   console.log(await response.json());
 }
@@ -170,7 +170,7 @@ async function editOrder(order) {
     },
     body: JSON.stringify(order),
   };
-  const url = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/editOrder/${order.order_id}`;
+  const url = `${process.env.REACT_APP_SERVER_URL}/editOrder/${order.order_id}`;
   const response = await fetch(url, config);
   console.log(await response.json());
 }
@@ -343,7 +343,7 @@ export default function OpenOrders() {
   });
   const [currentOrder, setCurrentOrder] = useState({})
 
-  const apiUrl = `http://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/${endPoint}`;
+  const apiUrl = `${process.env.REACT_APP_SERVER_URL}/${endPoint}`;
 
   const handleQuantityChange = (event) => {
     setNewOrder({ ...newOrder, size: event.target.value });
@@ -385,7 +385,7 @@ export default function OpenOrders() {
 
     getOpenOrders();
 
-    // let ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDRESS}:${process.env.REACT_APP_PORT}/ws/${endPoint}`)
+    // let ws = new WebSocket(`ws://${process.env.REACT_APP_SERVER_URL}/ws/${endPoint}`)
     // ws.onmessage = (event) => {
     //     setLastCandle(JSON.parse(event.data.candles))
     // };

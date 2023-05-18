@@ -122,6 +122,21 @@ const Reducer = (state, action) => {
                 dataUpdated: action.payload
             };
 
+        case ACTIONS.SET_OPEN_SNACKBAR:
+            return {
+                ...state,
+                openSnackbar: action.payload
+            };
+        case ACTIONS.SET_SNACKBAR_MESSAGE:
+            return {
+                ...state,
+                snackbarMessage: action.payload
+            };
+        case ACTIONS.SET_SNACKBAR_COLOR:
+            return {
+                ...state,
+                snackbarColor: action.payload
+            };
             
         default:
             return state;
