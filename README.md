@@ -1,4 +1,4 @@
-## Node Version
+## Version Info
 [![React](https://img.shields.io/badge/-ReactJs-61DAFB?logo=react&logoColor=white&style=for-the-badge)]()
 [![Node](https://img.shields.io/badge/-Node.js%2014%20LTS-808080?logo=node.js&colorA=404040&logoColor=66cc33)]()
 [![Netlify Status](https://api.netlify.com/api/v1/badges/c91eb2a2-fde3-4fd4-bb15-69de57bb2f3d/deploy-status)](https://qubitron-futures.netlify.app)
