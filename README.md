@@ -1,3 +1,6 @@
+## Node Version
+[![Node](https://img.shields.io/badge/-Node.js%2014%20LTS-808080?logo=node.js&colorA=404040&logoColor=66cc33)]()
+[![React](https://img.shields.io/badge/-ReactJs-61DAFB?logo=react&logoColor=white&style=for-the-badge)]()
 # 가상화폐 거래소 설명
 
 데모 페이지 
@@ -163,3 +166,4 @@ Cancel : 주문 취소
 정리된 포지션 이력은 Filled Orders에서 확인가능하다.
 
 ![Untitled](images/Untitled%2017.png)
+
