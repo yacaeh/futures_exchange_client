@@ -161,20 +161,6 @@ async function cancelOrder(id) {
   console.log(await response.json());
 }
 
-async function editOrder(order) {
-  const config = {
-    method: "PUT",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(order),
-  };
-  const url = `${process.env.REACT_APP_SERVER_URL}/editOrder/${order.order_id}`;
-  const response = await fetch(url, config);
-  console.log(await response.json());
-}
-
 function EnhancedTableHead(props) {
   const {
     classes,
@@ -342,14 +328,33 @@ export default function OpenOrders() {
     stopPrice: 0.0,
   });
   const [currentOrder, setCurrentOrder] = useState({})
+  const [suggestLimitPrice, setSuggestLimitPrice] = useState(0.0);
+  
 
   const apiUrl = `${process.env.REACT_APP_SERVER_URL}/${endPoint}`;
+
+
+async function editOrder(event) {
+  event.preventDefault();
+  const config = {
+    method: "PUT",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(currentOrder),
+  };
+  const url = `${process.env.REACT_APP_SERVER_URL}/editOrder/${currentOrder.order_id}`;
+  const response = await fetch(url, config);
+  console.log(await response.json());
+}
 
   const handleQuantityChange = (event) => {
     setNewOrder({ ...newOrder, size: event.target.value });
   };
 
   const handleLimitPriceChange = (event) => {
+    setSuggestLimitPrice(event.target.value);
     setNewOrder({ ...newOrder, limitPrice: event.target.value });
   };
 
@@ -490,10 +495,11 @@ export default function OpenOrders() {
     cancelOrder(id);
     setRefreshData(!refreshData);
   };
-  const handleEditOrder = (id) => {
+  const handleEditOrder = (data) => {
     console.log("Edit order");
     // editOrder(id)
     setOpenEdit(true);
+    setCurrentOrder(data)
     setRefreshData(!refreshData);
   };
   const handleOrderDetail = (data) => {
@@ -769,7 +775,7 @@ export default function OpenOrders() {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            <form className={classes.form} onSubmit={editOrder}>
+            <form className={classes.form} onSubmit={(event) => editOrder(event)}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={62}>
                   <TextField
@@ -779,6 +785,7 @@ export default function OpenOrders() {
                     fullWidth
                     id="limitPrice"
                     label="Limit Price"
+                    value={suggestLimitPrice}
                     onChange={handleLimitPriceChange}
                     InputProps={{
                       startAdornment: (
